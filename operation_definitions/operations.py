@@ -273,7 +273,7 @@ def get_transition(nucleus, ms=0, mn=1):
     return transition
 
 
-def readout_state(mcas, state, step_idx=0): 
+def readout_nuclear_spin_state(mcas, state, step_idx=0): 
     """
         Appends a single shot readout sequence of a certain nuclear spin state to the passed mcas.
         params: 

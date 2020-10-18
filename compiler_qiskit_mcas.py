@@ -1,15 +1,15 @@
 from qiskit import QuantumCircuit
 from qiskit.compiler import transpile
 from qiskit.compiler.transpile import CouplingMap
-from header_footer_mcas import mcas_footer, mcas_header
 import numpy as np 
 import textwrap
 import os 
+from collections.abc import Iterable
+from .header_footer_mcas import mcas_footer, mcas_header
 
 
 mcas_file_name = "mcas_test.py"
 indent_level = "\t\t\t"
-            
 
 def transpile_ciruit_for_diamond(quantum_circuit_instance):
     """
@@ -57,7 +57,6 @@ def construct_list_with_json_from_QuantumCircuit_instance(quantum_circuit_instan
 
         operation_json['operation_name'] = operation_name
         operation_json['operation_params'] = gate_params
-        
 
         if gate_instance.num_qubits == 2: 
             controlled_qubit = gate_data[1][1].index
@@ -75,8 +74,61 @@ def construct_list_with_json_from_QuantumCircuit_instance(quantum_circuit_instan
 
 
 class McasWriter:
-    def __init__(self, gate_operation_json):
+    def __init__(self):
         self.mcas_line_list = [] # list of strings with the operations for the mcas file 
+
+    def interprete_json_operations(self, gate_operation_json):
+
+        if isinstance(gate_operation_json, Iterable):
+
+            for operation in gate_operation_json:
+                if 'qubit_index' in operation and 'operation_name' in operation and 'operation_params' in operation: 
+                    qubit_index = operation['qubit_index'] 
+
+                    if operation['operation_name'] not in ['barrier', 'measure']:
+                        if qubit_index == 0: 
+                            if operation['operation_name'] == 'rx': 
+                                self.add_rx_nitrogen(operation['operation_params'][0])
+                            elif operation['operation_name'] == 'ry': 
+                                self.add_ry_nitrogen(operation['operation_params'][0])
+                            else: 
+                                raise Exception("Invalid operation encountered in qubit {} the operation json" \
+                                            "Only rx, ry and cnot are valid for our Backend.".format(qubit_index))
+                        elif qubit_index == 1: 
+                            if operation['operation_name'] == 'rx': 
+                                self.add_rx_c_414(operation['operation_params'][0])
+                            elif operation['operation_name'] == 'ry': 
+                                self.add_ry_c_414(operation['operation_params'][0])
+                            else: 
+                                raise Exception("Invalid operation encountered in qubit {} the operation json" \
+                                            "Only rx, ry and cnot are valid for our Backend.".format(qubit_index))
+
+                        elif qubit_index == 2: 
+                            if operation['operation_name'] == 'rx': 
+                                self.add_rx_c_90(operation['operation_params'][0])
+                            elif operation['operation_name'] == 'ry': 
+                                self.add_ry_c_90(operation['operation_params'][0])
+                            else: 
+                                raise Exception("Invalid operation encountered in qubit {} the operation json" \
+                                            "Only rx, ry and cnot are valid for our Backend.".format(qubit_index))
+                        else: 
+                            raise Exception("Invalid qubit index encountered. Our system does only have 3 qubits: 0, 1 & 2")
+            
+                elif 'controlled_qubit' in operation and 'controlling_qubit' in operation and 'operation_name' in operation:
+                    pass # Cnot Gate part is still missing
+
+                elif 'operation_name' in operation: 
+                    if operation['operation_name'] == 'measure': 
+                        pass 
+                    elif operation['operation_name'] == 'barrier': 
+                        pass
+                    else: 
+                        raise Exception("The passed operation is not valid!")
+                    
+                else: 
+                    raise Exception("The passed operation is not valid!")
+        else: 
+            raise Exception("{} is not iterable!. Insert a valid list with json operations!".format(gate_operation_json))
     
     def add_rx_nitrogen(self, theta, ms=0):
         self.mcas_line_list.append("rx_nitrogen(mcas, {}, ms={})".format(theta, ms))
@@ -91,11 +143,11 @@ class McasWriter:
     def add_ry_c_90(self, theta, ms=0):
         self.mcas_line_list.append("ry_carbon_90(mcas, {}, ms={})".format(theta, ms))
     def add_cx(self, controlled_qubit, controlling_qubit): 
-        print("lalalal")
+        print("...work in progress")
     def add_nuclear_spin_initialisation(self, state): 
-        print("lalalla")
+        self.mcas_line_list.append("initialise_nuclear_spin_register(mcas, '{}')".format(state))
     def add_nuclear_spin_readout(self, state):
-        print("lalalla")
+        self.mcas_line_list.append("readout_nuclear_spin_state(mcas, '{}')".format(state))
 
     def write_mcas_file(self, destination): 
         with open(os.path.join(destination, mcas_file_name), 'w') as mcas_file: 
