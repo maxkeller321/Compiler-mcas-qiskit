@@ -16,10 +16,10 @@ state_list = ['+++', '++-', '+-+', '+--', '0++', '0+-',
 
 def rz_nitrogen(mcas, theta, ms=0, mn=1, amp=1.0): 
     """
-        rz rotation applied on the nitrogen nuclear spin. The sublevels mn = 0, 1 are used for computation & the electron sublevels ms = 0, -1 
+        rz rotation applied on the nitrogen nuclear spin. The sublevels mn = 0, 1 should be used for computation & the electron sublevels ms = 0, -1 
         params: 
             mcas: instance of the Multi-channel-sequence class
-            theta: rotation angle in rad must be in the range of in the range of -2pi <= theta <= 2pi
+            theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             ms: electron spin state 
             mn: nuclear spins state: can just be mn =+/-1: mn =+1 stands for the transition between mn = 0 & mn = +1 and  mn = -1 for the transition between mn = 0 & mn = -1 
             amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gate execution
@@ -30,10 +30,10 @@ def rz_nitrogen(mcas, theta, ms=0, mn=1, amp=1.0):
 
 def rx_nitrogen(mcas, theta, ms=0, mn=1, amp=1.0):
     """
-        rx rotation applied on the nitrogen nuclear spin. The sublevels mn = 0, 1 are used for computation & the electron sublevels ms = 0, -1 
+        rx rotation applied on the nitrogen nuclear spin. The sublevels mn = 0, 1 should be used for computation  & the electron sublevels ms = 0, -1 
         params: 
             mcas: instance of the Multi-channel-sequence class
-            theta: rotation angle in rad must be in the range of in the range of -2pi <= theta <= 2pi
+            theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             ms: electron spin state 
             mn: nuclear spins state: can just be mn =+/-1: mn =+1 stands for the transition between mn = 0 & mn = +1 and  mn = -1 for the transition between mn = 0 & mn = -1 
             amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gate execution
@@ -43,10 +43,10 @@ def rx_nitrogen(mcas, theta, ms=0, mn=1, amp=1.0):
 
 def ry_nitrogen(mcas, theta, ms=0, mn=1, amp=1.0):
     """
-        ry rotation applied on the nitrogen nuclear spin. The sublevels mn = 0, 1 are used for computation & the electron sublevels ms = 0, -1 
+        ry rotation applied on the nitrogen nuclear spin.The sublevels mn = 0, 1 should be used for computation  & the electron sublevels ms = 0, -1 
         params: 
             mcas: instance of the Multi-channel-sequence class
-            theta: rotation angle in rad must be in the range of in the range of -2pi <= theta <= 2pi
+            theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             ms: electron spin state 
             mn: nuclear spins state: can just be mn =+/-1: mn =+1 stands for the transition between mn = 0 & mn = +1 and  mn = -1 for the transition between mn = 0 & mn = -1 
             amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gate execution
@@ -60,7 +60,7 @@ def rz_carbon_90(mcas, theta, ms=0, amp=1.0):
         rz rotation applied on the carbon 90 nuclear spin. The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
-            theta: rotation angle in rad must be in the range of in the range of -2pi <= theta <= 2pi
+            theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             ms: electron spin state 
             amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gate execution
     """
@@ -73,7 +73,7 @@ def rx_carbon_90(mcas, theta, ms=0, amp=1.0):
         rx rotation applied on the carbon 90 nuclear spin. The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
-            theta: rotation angle in rad must be in the range of in the range of -2pi <= theta <= 2pi
+            theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             ms: electron spin state 
             amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gate execution
     """
@@ -85,7 +85,7 @@ def ry_carbon_90(mcas, theta, ms=0, amp=1):
         ry rotation applied on the carbon 90 nuclear spin.  The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
-            theta: rotation angle in rad must be in the range of in the range of -2pi <= theta <= 2pi
+            theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             ms: electron spin state 
             amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gate execution
     """
@@ -97,7 +97,7 @@ def rz_carbon_414(mcas, theta, ms=0, amp=1.0):
         rz rotation applied on the carbon 414 nuclear spin. The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
-            theta: rotation angle in rad must be in the range of in the range of -2pi <= theta <= 2pi
+            theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             ms: electron spin state 
             amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gate execution
     """
@@ -110,7 +110,7 @@ def rx_carbon_414(mcas, theta, ms=0, amp=1.0):
         rx rotation applied on the carbon 414 nuclear spin.  The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
-            theta: rotation angle in rad must be in the range of in the range of -2pi <= theta <= 2pi
+            theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             ms: electron spin state 
             amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gate execution
     """
@@ -122,7 +122,7 @@ def ry_carbon_414(mcas, theta, ms=0, amp=1.0):
         ry rotation applied on the carbon 414 nuclear spin.  The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
-            theta: rotation angle in rad must be in the range of in the range of -2pi <= theta <= 2pi
+            theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             ms: electron spin state 
             amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gate execution
     """
@@ -145,7 +145,7 @@ def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
         rx rotation applied on the nitrogen nuclear spin. The sublevels mn = 0, 1 are used for computation & the electron sublevels ms = 0, -1 
         params: 
             mcas: instance of the Multi-channel-sequence class
-            theta: rotation angle in rad must be in the range of in the range of -2pi <= theta <= 2pi
+            theta: rotation angle in rad must be in the range  of -2pi <= theta <= 2pi
             rotation_axis: axis of rotation 'x' or 'y' (to make an rotation around 'z' use another function)
             transition: key from get_transition that describes the correct rotation 
             amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gates execution
@@ -189,7 +189,7 @@ def get_optimised_angle_and_phase(theta, rotation_axis):
         optimises the angle theta (e.g rotation theta > np.pi --> makes more sense to go for a negative rotation )
         and returns the correct phase for the AWG
         params: 
-            theta: rotation angle in rad must be in the range of in the range of -2pi <= theta <= 2pi
+            theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             rotation_axis: axis of rotation 'x' or 'y' (to make an rotation around 'z' use another function)
     """
 
