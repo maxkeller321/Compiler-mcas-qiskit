@@ -6,6 +6,7 @@ import UserScripts.helpers.snippets_awg as sna; reload(sna)
 import AWG_M8190A_Elements as E
 
 
+
 transition_list = ['14n+1 ms0', '14n-1 ms0', '14n+1 ms-1', '14n-1 ms-1', '14n+1 ms+1', '14n-1 ms+1',
                    '13c414 ms0', '13c414 ms-1', '13c414 ms+1',
                    '13c90 ms-1', '13c90 ms+1']
@@ -169,9 +170,10 @@ def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
 
 def electron_rotation(mcas, theta, rotation_axis, nuclear_spin_state, amp=1.0, mixer_deg=-90):
     # go here also for the optimal control pulses 
+    # at the moment this functions is just build for a fully known register and not for +,-,0 and n+ and nn+
     theta, phase = get_optimised_angle_and_phase(theta, rotation_axis)
 
-    freq = pi3d.tt.mfl({'14N': [{'+1': +1, '0': 0, '-1': -1}[nuclear_spin_state]], '13c414': [{'+': +.5, '-': -.5}[nuclear_spin_state]], '13c90': [{'+': +.5, '-': -.5}[nuclear_spin_state]]}, ms_trans='left')
+    freq = pi3d.tt.mfl({'14N': [{'+1': +1, '0': 0, '-1': -1}[nuclear_spin_state[0]]], '13c414': [{'+': +.5, '-': -.5}[nuclear_spin_state[1]]], '13c90': [{'+': +.5, '-': -.5}[nuclear_spin_state[3]]]}, ms_trans='left')
     scaling_factor = theta/np.pi 
     lenth_mus=pi3d.tt.rp('e_rabi', mixer_deg=mixer_deg, amp=amp).pi*scaling_factor
     lenth_mus = E.round_length_mus_full_sample(lenth_mus)
@@ -363,3 +365,58 @@ def initialise_nuclear_spin_register(mcas, state):
             raise Exception("The entered state is not valid. State must be one of: \n {}".format(state_list))  
     else:
         raise Exception("Invalid state datatype! state must be of type string!")
+
+def initialise_electron_spin(mcas): 
+    """
+        Append an electron spin initialisation into ms=0
+        Params: 
+            mcas: instance of the Multi-channel-sequence class
+    """
+    sna.polarize_green(mcas)
+
+
+def electron_controlled_not(mcas, state): 
+    """
+        This function is not yet tested. It uses the optimal control pulses from snippets to realize 
+        controlled not gates on the electron spin dependent on a certain nuclear spin state. 
+    """
+
+    if state not in state_list: 
+        raise Exception("The entered state is not valid. State must be one of: \n {}".format(state_list))  
+
+
+    mcas.start_new_segment(name="cx", loop_count=1)
+    wave_file_kwargs = [dict(
+                    filepath=sna.wfpd_standard[state],
+                    rp=pi3d.tt.rp('e_rabi', mixer_deg=-90)
+                    )]
+    wave_file = [E.WaveFile(**i) for i in wave_file_kwargs][0]
+    length_mus_mw = wave_file.length_mus
+
+
+    def part_step():
+        t = np.cumsum([0.0, length_mus_mw])
+        return {
+            2: wave_file.ret_part(t[0], t[1]),
+        }
+
+    def pd2g_dict(mixer_deg):
+
+        pd2g_dict = {1: {}, 2: {}}
+        for ch in [1, 2]:
+            # for i in [2, 3, 4]:
+            for i in [2]:
+                pd2g_dict[ch][i] = {}
+                pd2g_dict[ch][i]['frequencies'] = pi3d.tt.mfl({'14n': [0]}) # is not going to be used but needs to be passed
+                pd2g_dict[ch][i].update(dict(type='robust', wave_file=E.WaveFile(part=part_step()[i], **wave_file_kwargs[0])))
+                if ch == 2:
+                    pd2g_dict[ch][i]['phases'] = np.array([mixer_deg])
+                else:
+                    pd2g_dict[2][i] = {}
+
+        return pd2g_dict
+    
+    d = pd2g_dict(-90.0)
+    aa = dict() # I don't think this is needed but I'm still going to pass it
+    mcas.asc(pd2g1=d[1][2], pd2g2=d[2][2], name='MW', **aa)
+
