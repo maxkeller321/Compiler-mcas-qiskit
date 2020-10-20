@@ -6,6 +6,7 @@ import UserScripts.helpers.snippets_awg as sna; reload(sna)
 import AWG_M8190A_Elements as E
 
 
+nuclei_list = ['14n', '13c414', '13c90']
 
 transition_list = ['14n+1 ms0', '14n-1 ms0', '14n+1 ms-1', '14n-1 ms-1', '14n+1 ms+1', '14n-1 ms+1',
                    '13c414 ms0', '13c414 ms-1', '13c414 ms+1',
@@ -14,6 +15,8 @@ transition_list = ['14n+1 ms0', '14n-1 ms0', '14n+1 ms-1', '14n-1 ms-1', '14n+1 
 state_list = ['+++', '++-', '+-+', '+--', '0++', '0+-',
                     '0-+', '0--', '-++', '-+-', '--+', '---',
                     'n+', 'nn+', '+', '-', '0']
+
+single_nuclei_state_list = ['n+', 'nn+', '+', '-', '0']
 
 def rz_nitrogen(mcas, theta, ms=0, mn=1, amp=1.0): 
     """
@@ -375,10 +378,48 @@ def initialise_electron_spin(mcas):
     sna.polarize_green(mcas)
 
 
+def cnot_between_nuclear_spins(mcas, controlled_qubit, controlling_qubit): 
+    """
+        Not yet tested! This function should append a controlled not gate to the mcas between two nuclei!  
+        params: 
+            mcas: instance of the Multi-channel-sequence class
+            controlled_qubit: controlled nuclear spin: (14n, 13c414, or 13c90) 
+            controlling_qubit: controlling nuclear spin: (14n, 13c414, or 13c90) 
+    """
+
+    if type(controlling_qubit) != str or type(controlled_qubit) != str: 
+        raise Exception("Controlled & controlling nuclei must be from the type string!") 
+    if controlled_qubit.lower() not in nuclei_list: 
+        raise Exception("Controlled nuclei not valid! Must be one of: \n {}".format(nuclei_list))
+    if  controlling_qubit.lower() not in nuclei_list: 
+        raise Exception("Controlling nuclei not valid! Must be one of: \n {}".format(nuclei_list))
+
+    initialise_electron_spin(mcas)
+
+    if controlling_qubit.lower() == '14n': 
+        electron_controlled_not(mcas, '+')
+    elif controlling_qubit.lower() == '13c414': 
+        electron_controlled_not(mcas, 'n+')
+    elif controlling_qubit.lower() == '13c90': 
+        electron_controlled_not(mcas, 'nn+')
+
+    if controlled_qubit.lower() == '14n': 
+        rx_nitrogen(mcas, np.pi, ms=-1)
+    elif controlled_qubit.lower() == '13c414': 
+        rx_carbon_414(mcas, np.pi, ms=-1)
+    elif controlled_qubit.lower() == '13c90':
+        rx_carbon_90(mcas, np.pi, ms=-1)
+
 def electron_controlled_not(mcas, state): 
     """
         This function is not yet tested. It uses the optimal control pulses from snippets to realize 
         controlled not gates on the electron spin dependent on a certain nuclear spin state. 
+        params: 
+            mcas: instance of the Multi-channel-sequence class
+            state: nuclear spin state on which the electron rotation should be dependend 
+                Pick one from:  ['+++', '++-', '+-+', '+--', '0++', '0+-',
+                            '0-+', '0--', '-++', '-+-', '--+', '---',
+                                'n+', 'nn+', '+', '-', '0']
     """
 
     if state not in state_list: 
