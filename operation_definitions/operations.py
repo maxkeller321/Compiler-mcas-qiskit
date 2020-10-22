@@ -10,11 +10,11 @@ nuclei_list = ['14n', '13c414', '13c90']
 
 transition_list = ['14n+1 ms0', '14n-1 ms0', '14n+1 ms-1', '14n-1 ms-1', '14n+1 ms+1', '14n-1 ms+1',
                    '13c414 ms0', '13c414 ms-1', '13c414 ms+1',
-                   '13c90 ms-1', '13c90 ms+1']
+                   '13c90 ms0', '13c90 ms-1', '13c90 ms+1']
 
 state_list = ['+++', '++-', '+-+', '+--', '0++', '0+-',
                     '0-+', '0--', '-++', '-+-', '--+', '---',
-                    'n+', 'nn+', '+', '-', '0']
+                    'n+', 'n-', 'nn+', 'nn-', '+', '-', '0']
 
 single_nuclei_state_list = ['n+', 'nn+', '+', '-', '0']
 
@@ -163,6 +163,10 @@ def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
     scaling_factor = theta/np.pi 
     lenth_mus =  E.round_length_mus_full_sample(pi3d.tt.rp(transition, amp=amp).pi*scaling_factor) 
 
+    print(transition)
+    print(phase)
+    print(theta)
+    print(amp)
     sna.nuclear_rabi(mcas,
                     name=transition,
                     frequencies=[pi3d.tt.t(transition).current_frequency],
@@ -170,6 +174,7 @@ def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
                     phases=[phase],
                     length_mus=lenth_mus,
                     new_segment=True)
+    mcas.asc(length_mus=10) # delay for RF field fluctuations
 
 def electron_rotation(mcas, theta, rotation_axis, nuclear_spin_state, amp=1.0, mixer_deg=-90):
     # go here also for the optimal control pulses 
@@ -273,7 +278,7 @@ def get_transition(nucleus, ms=0, mn=1):
     transition = '{} {}'.format(nuc_part, electron_part) 
 
     if transition not in transition_list: 
-        raise Exception("The Transition is not a valid transition")
+        raise Exception("The Transition: {} is not a valid transition".format(transition))
 
     return transition
 
@@ -290,6 +295,7 @@ def readout_nuclear_spin_state(mcas, state, step_idx=0):
             step_idx: If multiple SSR's are used, the step_idx must refer to the corresponding ssr 
                 e.g.: (first ssr: step_idx = 0, second ssr: step_idx = 1 ...)
     """
+
     def get_nuclei(state):
 
         if type(state) == str:
@@ -320,26 +326,25 @@ def readout_nuclear_spin_state(mcas, state, step_idx=0):
         else: 
             raise Exception("Inserted state is not correct")
         
-        nucleus = get_nuclei(state)
+    nucleus = get_nuclei(state)
+    if (nucleus == '13c90' and state.count('n') == 2) or nucleus == '13c414':
 
-        if (nucleus == '13c90' and state.count('n') == 2) or nucleus == '13c414':
+        wave_file_kwargs_all_but_standard = dict(filepath=sna.wfpd_standard[get_inverse_state(state)], rp=pi3d.tt.rp('e_rabi', mixer_deg=-90))
+        wave_file_kwargs_all = dict(filepath=sna.wfpd_standard[state], rp=pi3d.tt.rp('e_rabi', mixer_deg=-90))
 
-            wave_file_kwargs_all_but_standard = dict(filepath=sna.wfpd_standard[get_inverse_state(state)], rp=pi3d.tt.rp('e_rabi', mixer_deg=-90))
-            wave_file_kwargs_all = dict(filepath=sna.wfpd_standard[state], rp=pi3d.tt.rp('e_rabi', mixer_deg=-90))
+        sna.ssr(mcas,
+                transition='left',
+                robust=True, # necessary
+                laser_dur=sna.__LASER_DUR_DICT__[nucleus],
+                mixer_deg=-90,
+                nuc=nucleus,
+                frequencies=[pi3d.tt.mfl({'14n': [0]}), pi3d.tt.mfl({'14n': [0]})], # frequencies are not used, when we pass a wavefile to the ssr
+                wave_file_kwargs=[wave_file_kwargs_all, wave_file_kwargs_all_but_standard],
+                repetitions=sna.__SSR_REPETITIONS__[nucleus],
+                step_idx=step_idx)
 
-            sna.ssr(mcas,
-                    transition='left',
-                    robust=True, # necessary 
-                    laser_dur=sna.__LASER_DUR_DICT__[nucleus], 
-                    mixer_deg=-90,
-                    nuc=nucleus,
-                    frequencies=[pi3d.tt.mfl({'14n': [0]}), pi3d.tt.mfl({'14n': [0]})], # frequencies are not used, when we pass a wavefile to the ssr 
-                    wave_file_kwargs=[wave_file_kwargs_all, wave_file_kwargs_all_but_standard],
-                    repetitions=sna.__SSR_REPETITIONS__[nucleus],
-                    step_idx=step_idx)
-
-        else:
-            sna.ssr_single_state(mcas, state, repetitions=sna.__SSR_REPETITIONS__[nucleus], step_idx=step_idx)
+    else:
+        sna.ssr_single_state(mcas, state, repetitions=sna.__SSR_REPETITIONS__[nucleus], step_idx=step_idx)
 
 def initialise_nuclear_spin_register(mcas, state):
     """
