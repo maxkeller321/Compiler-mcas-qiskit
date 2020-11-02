@@ -1,5 +1,10 @@
 import numpy as np 
 import itertools
+import os 
+import sys 
+
+sys.path.append("D:\Python\pi3diamond\pym8190a")
+import pym8190a
 
 from pi3diamond import pi3d
 import UserScripts.helpers.snippets_awg as sna; reload(sna)
@@ -431,7 +436,7 @@ def electron_pi_pulse(mcas, ms_transition='left'):
                                     transition=ms_transition, # could also be -1 (needs to be tested)
                                     frequencies=pi3d.tt.mfl({'14n': [0]}, ms_trans={'left':'-1', 'right':'+1'}[ms_transition]),
                                     new_segment=True)
-                                    
+
 
 def electron_controlled_not(mcas, state): 
     """
@@ -484,3 +489,41 @@ def electron_controlled_not(mcas, state):
     aa = dict() # I don't think this is needed but I'm still going to pass it
     mcas.asc(pd2g1=d[1][2], pd2g2=d[2][2], name='MW', **aa)
 
+def electron_controlled_not_2(mcas, nucstate):
+
+    """
+    Not yet tested & it should only be used when electron_controlled_not is not working!  
+    Controlled not gate on the electron spin dependent on the nuclear spin state
+    There is a documentation for nucstate in one of the oneNote pages 
+    """
+    cnot_dict={}
+    for root, dirs, files in os.walk(r"\\PI3-PC161\d\Python\pi3diamond\UserScripts\Robust\new_pulses_for_qutrit_qft_sensing", topdown=False):
+        for name in files:
+            if name in ['mw_aphi.dat', 'MW.dat']:
+                cnot_dict[os.path.basename(root)] = os.path.join(root, name)
+
+    for key, val in cnot_dict.items():
+        if 'FN' in key:
+            k = key[::-1][key[::-1].index('NF')+2:]
+            cnot_dict[k[:k.index('_')][::-1]] = val
+            del cnot_dict[key]
+        if '_qutrit_cphase_' in key:
+            k = key[len('20170317-h18m07s08_qutrit_'):]
+            cnot_dict[k] = val
+            del cnot_dict[key]
+
+    wfd = {}
+    for key, val in cnot_dict.items():
+        wfd[key] = pym8190a.elements.WaveFile(filepath=val, rp=pi3d.tt.rp('e_rabi', mixer_deg=-90))
+
+
+
+    def crot(nucstate):
+        sna.electron_rabi(mcas,
+                            name='electron pi',
+                            wave_file=wfd[nucstate],
+                            frequencies=pi3d.tt.mfl({'14N': [0]}),
+                            new_segment=False,
+                            mixer_deg=-90)
+
+    crot(nucstate)
