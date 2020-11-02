@@ -415,6 +415,24 @@ def cnot_between_nuclear_spins(mcas, controlled_qubit, controlling_qubit):
     elif controlled_qubit.lower() == '13c90':
         rx_carbon_90(mcas, np.pi, ms=-1)
 
+def electron_pi_pulse(mcas, ms_transition='left'):
+    """
+        not fully written 
+        & not tested 
+        params: 
+            mcas: instance of the Multi-channel-sequence class
+            ms_transition: stands for the addressed electron sub levels 
+                            ('left' stands for transition between ms = -1/ 0 and 'right' for the transition between ms=+1/0 )
+
+    """
+    
+    sna.single_robust_electron_pi(mcas,
+                                    nuc='all',
+                                    transition=ms_transition, # could also be -1 (needs to be tested)
+                                    frequencies=pi3d.tt.mfl({'14n': [0]}, ms_trans={'left':'-1', 'right':'+1'}[ms_transition]),
+                                    new_segment=True)
+                                    
+
 def electron_controlled_not(mcas, state): 
     """
         This function is not yet tested. It uses the optimal control pulses from snippets to realize 
