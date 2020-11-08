@@ -106,6 +106,7 @@ def rz_carbon_414(mcas, theta, ms=0, amp=1.0):
         rz rotation applied on the carbon 414 nuclear spin. The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
+            
             theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             ms: electron spin state 
             amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gate execution
@@ -168,10 +169,6 @@ def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
     scaling_factor = theta/np.pi 
     lenth_mus =  E.round_length_mus_full_sample(pi3d.tt.rp(transition, amp=amp).pi*scaling_factor) 
 
-    print(transition)
-    print(phase)
-    print(theta)
-    print(amp)
     sna.nuclear_rabi(mcas,
                     name=transition,
                     frequencies=[pi3d.tt.t(transition).current_frequency],
@@ -182,7 +179,19 @@ def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
     mcas.asc(length_mus=10) # delay for RF field fluctuations
 
 def electron_rotation(mcas, theta, rotation_axis, nuclear_spin_state, amp=1.0, mixer_deg=-90):
-    # go here also for the optimal control pulses 
+    """
+        This function is not yet tested! 
+
+        This function applies a non robust electron rotation around the angle theta for a certain nuclear spin state
+        params: 
+            mcas: instance of the Multi-channel-sequence class
+            theta: rotation angle in rad must be in the range  of -2pi <= theta <= 2pi
+            rotation_axis: axis of rotation 'x' or 'y' (to make an rotation around 'z' use another function)
+            nuclear_spin_state: certain nuclear spin stat must be one of: ['+++', '++-', '+-+', '+--', '0++', '0+-',
+                    '0-+', '0--', '-++', '-+-', '--+', '---']
+            amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gates execution
+            mixer_deg: 
+    """
     # at the moment this functions is just build for a fully known register and not for +,-,0 and n+ and nn+
     theta, phase = get_optimised_angle_and_phase(theta, rotation_axis)
 
@@ -440,7 +449,11 @@ def electron_pi_pulse(mcas, ms_transition='left'):
 
 def electron_controlled_not(mcas, state): 
     """
-        This function is not yet tested. It uses the optimal control pulses from snippets to realize 
+        This function is not yet tested. There are two implementations in the function one should be commented out!
+            Both need to be tested. If the implementation with the electron_rabis is working then this implementation 
+            should be prefered!
+        
+        It uses the optimal control pulses from snippets to realize 
         controlled not gates on the electron spin dependent on a certain nuclear spin state. 
         params: 
             mcas: instance of the Multi-channel-sequence class
@@ -449,12 +462,13 @@ def electron_controlled_not(mcas, state):
                             '0-+', '0--', '-++', '-+-', '--+', '---',
                                 'n+', 'nn+', '+', '-', '0']
     """
-
+    """
     if state not in state_list: 
         raise Exception("The entered state is not valid. State must be one of: \n {}".format(state_list))  
 
-
+    
     mcas.start_new_segment(name="cx", loop_count=1)
+
     wave_file_kwargs = [dict(
                     filepath=sna.wfpd_standard[state],
                     rp=pi3d.tt.rp('e_rabi', mixer_deg=-90)
@@ -488,6 +502,22 @@ def electron_controlled_not(mcas, state):
     d = pd2g_dict(-90.0)
     aa = dict() # I don't think this is needed but I'm still going to pass it
     mcas.asc(pd2g1=d[1][2], pd2g2=d[2][2], name='MW', **aa)
+    """
+
+    """Second implementation"""
+
+
+    wave_file = E.WaveFile(filepath=sna.wfpd_standard[state],
+                            nonlinear_params=pi3d.tt.e_rabi_left.process_electron_rabi_file()) # maybe consider also right
+
+
+    sna.electron_rabi(mcas,
+                        #name='electron rabi',
+                        frequencies=pi3d.tt.mfl({'14N': [0]}),
+                        wave_file=wave_file,
+                        wait_switch=0.0,
+                        new_segment=True)
+
 
 def electron_controlled_not_2(mcas, nucstate):
 
