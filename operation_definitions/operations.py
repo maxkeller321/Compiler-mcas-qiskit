@@ -66,7 +66,8 @@ def ry_nitrogen(mcas, theta, ms=0, mn=1, amp=1.0):
 
 def rz_carbon_90(mcas, theta, ms=-1, amp=1.0):
     """
-        rz rotation applied on the carbon 90 nuclear spin. The electron sublevels ms = 0, -1 are used for computation 
+        rz rotation applied on the carbon 90 nuclear spin. The electron spin needs to be in ms=-1 before the rotation is applied, 
+        because otherwise c414 & c90 are not distinguishable. The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
             theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
@@ -79,7 +80,8 @@ def rz_carbon_90(mcas, theta, ms=-1, amp=1.0):
 
 def rx_carbon_90(mcas, theta, ms=-1, amp=1.0):
     """
-        rx rotation applied on the carbon 90 nuclear spin. The electron sublevels ms = 0, -1 are used for computation 
+        rx rotation applied on the carbon 90 nuclear spin. The electron spin needs to be in ms=-1 before the rotation is applied, 
+        because otherwise c414 & c90 are not distinguishable. The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
             theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
@@ -91,7 +93,8 @@ def rx_carbon_90(mcas, theta, ms=-1, amp=1.0):
 
 def ry_carbon_90(mcas, theta, ms=-1, amp=1):
     """
-        ry rotation applied on the carbon 90 nuclear spin.  The electron sublevels ms = 0, -1 are used for computation 
+        ry rotation applied on the carbon 90 nuclear spin. The electron spin needs to be in ms=-1 before the rotation is applied, 
+        because otherwise c414 & c90 are not distinguishable. The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
             theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
@@ -103,7 +106,8 @@ def ry_carbon_90(mcas, theta, ms=-1, amp=1):
 
 def rz_carbon_414(mcas, theta, ms=-1, amp=1.0):
     """
-        rz rotation applied on the carbon 414 nuclear spin. The electron sublevels ms = 0, -1 are used for computation 
+        rz rotation applied on the carbon 414 nuclear spin. The electron spin needs to be in ms=-1 before the rotation is applied, 
+        because otherwise c414 & c90 are not distinguishable. The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
             
@@ -117,7 +121,8 @@ def rz_carbon_414(mcas, theta, ms=-1, amp=1.0):
 
 def rx_carbon_414(mcas, theta, ms=-1, amp=1.0):
     """
-        rx rotation applied on the carbon 414 nuclear spin.  The electron sublevels ms = 0, -1 are used for computation 
+        rx rotation applied on the carbon 414 nuclear spin. The electron spin needs to be in ms=-1 before the rotation is applied, 
+        because otherwise c414 & c90 are not distinguishable. The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
             theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
@@ -129,7 +134,8 @@ def rx_carbon_414(mcas, theta, ms=-1, amp=1.0):
 
 def ry_carbon_414(mcas, theta, ms=-1, amp=1.0):
     """
-        ry rotation applied on the carbon 414 nuclear spin.  The electron sublevels ms = 0, -1 are used for computation 
+        ry rotation applied on the carbon 414 nuclear spin. The electron spin needs to be in ms=-1 before the rotation is applied, 
+        because otherwise c414 & c90 are not distinguishable. The electron sublevels ms = 0, -1 are used for computation 
         params: 
             mcas: instance of the Multi-channel-sequence class
             theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
@@ -140,19 +146,52 @@ def ry_carbon_414(mcas, theta, ms=-1, amp=1.0):
     nuclear_rotation(mcas, theta, 'y', transition, amp)
 
 def rz_electron(mcas, theta, nuclear_spin_state, amp=1.0, mixer_deg=-90):
+    """
+        This function appends a non robust electron rotation of the angle theta around the z axis for a certain nuclear spin state
+        to the Multi-Channel-Sequence
+        params: 
+            mcas: instance of the Multi-channel-sequence class
+            theta: rotation angle in rad must be in the range  of -2pi <= theta <= 2pi
+            nuclear_spin_state: certain nuclear spin stat must be one of: ['+++', '++-', '+-+', '+--', '0++', '0+-',
+                    '0-+', '0--', '-++', '-+-', '--+', '---']
+            amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gates execution
+            mixer_deg: 
+    """
     electron_rotation(mcas,  np.pi/2, 'y', nuclear_spin_state, amp=amp, mixer_deg=mixer_deg)
     electron_rotation(mcas, theta, 'x', nuclear_spin_state, amp=amp, mixer_deg=mixer_deg)
     electron_rotation(mcas, -np.pi/2, 'y', nuclear_spin_state, amp=amp, mixer_deg=mixer_deg)
 
 def rx_electron(mcas, theta, nuclear_spin_state, amp=1.0, mixer_deg=-90):
+    """
+        This function appends a non robust electron rotation of the angle theta around the x axis for a certain nuclear spin state
+        to the Multi-Channel-Sequence
+        params: 
+            mcas: instance of the Multi-channel-sequence class
+            theta: rotation angle in rad must be in the range  of -2pi <= theta <= 2pi
+            nuclear_spin_state: certain nuclear spin stat must be one of: ['+++', '++-', '+-+', '+--', '0++', '0+-',
+                    '0-+', '0--', '-++', '-+-', '--+', '---']
+            amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gates execution
+            mixer_deg: 
+    """
     electron_rotation(mcas, theta, 'x', nuclear_spin_state, amp=amp, mixer_deg=mixer_deg)
 
 def ry_electron(mcas, theta, nuclear_spin_state, amp=1.0, mixer_deg=-90):
+    """
+        This function appends a non robust electron rotation of the angle theta around the y axis for a certain nuclear spin state
+        to the Multi-Channel-Sequence
+        params: 
+            mcas: instance of the Multi-channel-sequence class
+            theta: rotation angle in rad must be in the range  of -2pi <= theta <= 2pi
+            nuclear_spin_state: certain nuclear spin stat must be one of: ['+++', '++-', '+-+', '+--', '0++', '0+-',
+                    '0-+', '0--', '-++', '-+-', '--+', '---']
+            amp: value between [0, 1] (defines the gate duration) A high amplitude of 1 leads to the fastest gates execution
+            mixer_deg: 
+    """
     electron_rotation(mcas, theta, 'y', nuclear_spin_state, amp=amp, mixer_deg=mixer_deg)
 
 def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
     """
-        rx rotation applied on the nitrogen nuclear spin. The sublevels mn = 0, 1 are used for computation & the electron sublevels ms = 0, -1 
+        rx rotation applied on the nitrogen nuclear spin. The nitrogen sublevels mn = 0, 1 are used for computation & the electron sublevels ms = 0, -1 
         params: 
             mcas: instance of the Multi-channel-sequence class
             theta: rotation angle in rad must be in the range  of -2pi <= theta <= 2pi
@@ -180,9 +219,7 @@ def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
 
 def electron_rotation(mcas, theta, rotation_axis, nuclear_spin_state, amp=1.0, mixer_deg=-90):
     """
-        This function is not yet tested! 
-
-        This function applies a non robust electron rotation around the angle theta for a certain nuclear spin state
+        This function applies a non robust electron rotation of the angle theta around a certain axis for a certain nuclear spin state
         params: 
             mcas: instance of the Multi-channel-sequence class
             theta: rotation angle in rad must be in the range  of -2pi <= theta <= 2pi
@@ -399,7 +436,7 @@ def initialise_electron_spin(mcas):
 
 def initialise_with_red(mcas):
     """
-            Append an electron spin initialisation into ms=0
+        Append an electron spin initialisation into ms=0
         Params:
             mcas: instance of the Multi-channel-sequence class
     """
@@ -440,8 +477,7 @@ def cnot_between_nuclear_spins(mcas, controlled_qubit, controlling_qubit):
 
 def electron_pi_pulse(mcas, ms_transition='left'):
     """
-        not fully written 
-        & not tested 
+        Applies a roubust electron pi pulse, which does not depend an a certain nuclear spin state!
         params: 
             mcas: instance of the Multi-channel-sequence class
             ms_transition: stands for the addressed electron sub levels 
