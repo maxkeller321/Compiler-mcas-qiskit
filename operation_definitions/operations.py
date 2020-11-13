@@ -64,7 +64,7 @@ def ry_nitrogen(mcas, theta, ms=0, mn=1, amp=1.0):
     nuclear_rotation(mcas, theta, 'y', transition, amp)
 
 
-def rz_carbon_90(mcas, theta, ms=0, amp=1.0): 
+def rz_carbon_90(mcas, theta, ms=-1, amp=1.0):
     """
         rz rotation applied on the carbon 90 nuclear spin. The electron sublevels ms = 0, -1 are used for computation 
         params: 
@@ -77,7 +77,7 @@ def rz_carbon_90(mcas, theta, ms=0, amp=1.0):
     rx_carbon_90(mcas, theta, ms, amp)
     ry_carbon_90(mcas, -np.pi/2, ms, amp)
 
-def rx_carbon_90(mcas, theta, ms=0, amp=1.0): 
+def rx_carbon_90(mcas, theta, ms=-1, amp=1.0):
     """
         rx rotation applied on the carbon 90 nuclear spin. The electron sublevels ms = 0, -1 are used for computation 
         params: 
@@ -89,7 +89,7 @@ def rx_carbon_90(mcas, theta, ms=0, amp=1.0):
     transition = get_transition('13c90', ms=ms)
     nuclear_rotation(mcas, theta, 'x', transition, amp)
 
-def ry_carbon_90(mcas, theta, ms=0, amp=1): 
+def ry_carbon_90(mcas, theta, ms=-1, amp=1):
     """
         ry rotation applied on the carbon 90 nuclear spin.  The electron sublevels ms = 0, -1 are used for computation 
         params: 
@@ -101,7 +101,7 @@ def ry_carbon_90(mcas, theta, ms=0, amp=1):
     transition = get_transition('13c90', ms=ms)
     nuclear_rotation(mcas, theta, 'y', transition, amp)
 
-def rz_carbon_414(mcas, theta, ms=0, amp=1.0): 
+def rz_carbon_414(mcas, theta, ms=-1, amp=1.0):
     """
         rz rotation applied on the carbon 414 nuclear spin. The electron sublevels ms = 0, -1 are used for computation 
         params: 
@@ -115,7 +115,7 @@ def rz_carbon_414(mcas, theta, ms=0, amp=1.0):
     rx_carbon_414(mcas, theta, ms, amp)
     ry_carbon_414(mcas, -np.pi/2, ms, amp)
 
-def rx_carbon_414(mcas, theta, ms=0, amp=1.0): 
+def rx_carbon_414(mcas, theta, ms=-1, amp=1.0):
     """
         rx rotation applied on the carbon 414 nuclear spin.  The electron sublevels ms = 0, -1 are used for computation 
         params: 
@@ -127,7 +127,7 @@ def rx_carbon_414(mcas, theta, ms=0, amp=1.0):
     transition = get_transition('13c414', ms=ms)
     nuclear_rotation(mcas, theta, 'x', transition, amp)
 
-def ry_carbon_414(mcas, theta, ms=0, amp=1.0): 
+def ry_carbon_414(mcas, theta, ms=-1, amp=1.0):
     """
         ry rotation applied on the carbon 414 nuclear spin.  The electron sublevels ms = 0, -1 are used for computation 
         params: 
@@ -139,15 +139,15 @@ def ry_carbon_414(mcas, theta, ms=0, amp=1.0):
     transition = get_transition('13c414', ms=ms)
     nuclear_rotation(mcas, theta, 'y', transition, amp)
 
-def rz_electron(mcas, theta, nuclear_spin_state, amp=1.0, mixer_deg=-90.0): 
+def rz_electron(mcas, theta, nuclear_spin_state, amp=1.0, mixer_deg=-90):
     electron_rotation(mcas,  np.pi/2, 'y', nuclear_spin_state, amp=amp, mixer_deg=mixer_deg)
     electron_rotation(mcas, theta, 'x', nuclear_spin_state, amp=amp, mixer_deg=mixer_deg)
     electron_rotation(mcas, -np.pi/2, 'y', nuclear_spin_state, amp=amp, mixer_deg=mixer_deg)
 
-def rx_electron(mcas, theta, nuclear_spin_state, amp=1.0, mixer_deg=-90.0): 
+def rx_electron(mcas, theta, nuclear_spin_state, amp=1.0, mixer_deg=-90):
     electron_rotation(mcas, theta, 'x', nuclear_spin_state, amp=amp, mixer_deg=mixer_deg)
 
-def ry_electron(mcas, theta, nuclear_spin_state, amp=1.0, mixer_deg=-90.0): 
+def ry_electron(mcas, theta, nuclear_spin_state, amp=1.0, mixer_deg=-90):
     electron_rotation(mcas, theta, 'y', nuclear_spin_state, amp=amp, mixer_deg=mixer_deg)
 
 def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
@@ -195,7 +195,7 @@ def electron_rotation(mcas, theta, rotation_axis, nuclear_spin_state, amp=1.0, m
     # at the moment this functions is just build for a fully known register and not for +,-,0 and n+ and nn+
     theta, phase = get_optimised_angle_and_phase(theta, rotation_axis)
 
-    freq = pi3d.tt.mfl({'14N': [{'+1': +1, '0': 0, '-1': -1}[nuclear_spin_state[0]]], '13c414': [{'+': +.5, '-': -.5}[nuclear_spin_state[1]]], '13c90': [{'+': +.5, '-': -.5}[nuclear_spin_state[3]]]}, ms_trans='left')
+    freq = pi3d.tt.mfl({'14N': [{'+': +1, '0': 0, '-': -1}[nuclear_spin_state[0]]], '13c414': [{'+': +.5, '-': -.5}[nuclear_spin_state[1]]], '13c90': [{'+': +.5, '-': -.5}[nuclear_spin_state[2]]]}, ms_trans='left')
     scaling_factor = theta/np.pi 
     lenth_mus=pi3d.tt.rp('e_rabi', mixer_deg=mixer_deg, amp=amp).pi*scaling_factor
     lenth_mus = E.round_length_mus_full_sample(lenth_mus)
@@ -395,7 +395,15 @@ def initialise_electron_spin(mcas):
         Params: 
             mcas: instance of the Multi-channel-sequence class
     """
-    sna.polarize_green(mcas)
+    sna.polarize_green(mcas, new_segment=True)
+
+def initialise_with_red(mcas):
+    """
+            Append an electron spin initialisation into ms=0
+        Params:
+            mcas: instance of the Multi-channel-sequence class
+    """
+    sna.polarize(mcas, new_segment=True)
 
 
 def cnot_between_nuclear_spins(mcas, controlled_qubit, controlling_qubit): 
