@@ -359,6 +359,7 @@ def readout_nuclear_spin_state(mcas, state, step_idx=0):
 
     else:
         sna.ssr_single_state(mcas, state, repetitions=sna.__SSR_REPETITIONS__[nucleus], step_idx=step_idx)
+        
 
 def initialise_nuclear_spin_register(mcas, state):
     """
