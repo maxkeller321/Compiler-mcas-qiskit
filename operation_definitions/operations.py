@@ -445,7 +445,7 @@ def initialise_with_red(mcas):
 
 def cnot_between_nuclear_spins(mcas, controlled_qubit, controlling_qubit): 
     """
-        Not yet tested! This function should append a controlled not gate to the mcas between two nuclei!  
+        Not all combinations are tested but works quit stable! This function should append a controlled not gate to the mcas between two nuclei!  
         params: 
             mcas: instance of the Multi-channel-sequence class
             controlled_qubit: controlled nuclear spin: (14n, 13c414, or 13c90) 
@@ -459,7 +459,7 @@ def cnot_between_nuclear_spins(mcas, controlled_qubit, controlling_qubit):
     if  controlling_qubit.lower() not in nuclei_list: 
         raise Exception("Controlling nuclei not valid! Must be one of: \n {}".format(nuclei_list))
 
-    initialise_electron_spin(mcas)
+    initialise_with_red(mcas)
 
     if controlling_qubit.lower() == '14n': 
         electron_controlled_not(mcas, '+')
@@ -491,15 +491,23 @@ def electron_pi_pulse(mcas, ms_transition='left'):
                                     frequencies=pi3d.tt.mfl({'14n': [0]}, ms_trans={'left':'-1', 'right':'+1'}[ms_transition]),
                                     new_segment=True)
 
+def nuclear_robust_rotation(mcas):
+    """
+    in the making ... 
+    """
+
+    wave_file = E.WaveFile(filepath=sna.wfpd_standard[state],
+                            rp=pi3d.tt.rabi_parameters['13c414 ms-1'])
+
+    sna.nuclear_rabi(mcas,
+                     name='Robust 13c414 pi',
+                     frequencies=[
+
 
 def electron_controlled_not(mcas, state): 
-    """
-        This function is not yet tested. There are two implementations in the function one should be commented out!
-            Both need to be tested. If the implementation with the electron_rabis is working then this implementation 
-            should be prefered!
-        
-        It uses the optimal control pulses from snippets to realize 
-        controlled not gates on the electron spin dependent on a certain nuclear spin state. 
+    """ 
+        Adds an robust electron controlled not gates to the mcas, which is dependent on a certain nuclear spin state. 
+        Note: (It uses the optimal control pulses from snippets)
         params: 
             mcas: instance of the Multi-channel-sequence class
             state: nuclear spin state on which the electron rotation should be dependend 
@@ -507,98 +515,14 @@ def electron_controlled_not(mcas, state):
                             '0-+', '0--', '-++', '-+-', '--+', '---',
                                 'n+', 'nn+', '+', '-', '0']
     """
-    """
-    if state not in state_list: 
-        raise Exception("The entered state is not valid. State must be one of: \n {}".format(state_list))  
-
-    
-    mcas.start_new_segment(name="cx", loop_count=1)
-
-    wave_file_kwargs = [dict(
-                    filepath=sna.wfpd_standard[state],
-                    rp=pi3d.tt.rp('e_rabi', mixer_deg=-90)
-                    )]
-    wave_file = [E.WaveFile(**i) for i in wave_file_kwargs][0]
-    length_mus_mw = wave_file.length_mus
 
 
-    def part_step():
-        t = np.cumsum([0.0, length_mus_mw])
-        return {
-            2: wave_file.ret_part(t[0], t[1]),
-        }
-
-    def pd2g_dict(mixer_deg):
-
-        pd2g_dict = {1: {}, 2: {}}
-        for ch in [1, 2]:
-            # for i in [2, 3, 4]:
-            for i in [2]:
-                pd2g_dict[ch][i] = {}
-                pd2g_dict[ch][i]['frequencies'] = pi3d.tt.mfl({'14n': [0]}) # is not going to be used but needs to be passed
-                pd2g_dict[ch][i].update(dict(type='robust', wave_file=E.WaveFile(part=part_step()[i], **wave_file_kwargs[0])))
-                if ch == 2:
-                    pd2g_dict[ch][i]['phases'] = np.array([mixer_deg])
-                else:
-                    pd2g_dict[2][i] = {}
-
-        return pd2g_dict
-    
-    d = pd2g_dict(-90.0)
-    aa = dict() # I don't think this is needed but I'm still going to pass it
-    mcas.asc(pd2g1=d[1][2], pd2g2=d[2][2], name='MW', **aa)
-    """
-
-    """Second implementation"""
-
-
-    wave_file = E.WaveFile(filepath=sna.wfpd_standard[state],
-                            nonlinear_params=pi3d.tt.e_rabi_left.process_electron_rabi_file()) # maybe consider also right
-
+    wave_file = E.WaveFile(sna.wfpd_standard[state]
+                            rp=pi3d.tt.rabi_parameters['e_rabi_ou350deg-90'])
 
     sna.electron_rabi(mcas,
-                        #name='electron rabi',
+                        name='robust electron pi',
                         frequencies=pi3d.tt.mfl({'14N': [0]}),
                         wave_file=wave_file,
                         wait_switch=0.0,
                         new_segment=True)
-
-
-def electron_controlled_not_2(mcas, nucstate):
-
-    """
-    Not yet tested & it should only be used when electron_controlled_not is not working!  
-    Controlled not gate on the electron spin dependent on the nuclear spin state
-    There is a documentation for nucstate in one of the oneNote pages 
-    """
-    cnot_dict={}
-    for root, dirs, files in os.walk(r"\\PI3-PC161\d\Python\pi3diamond\UserScripts\Robust\new_pulses_for_qutrit_qft_sensing", topdown=False):
-        for name in files:
-            if name in ['mw_aphi.dat', 'MW.dat']:
-                cnot_dict[os.path.basename(root)] = os.path.join(root, name)
-
-    for key, val in cnot_dict.items():
-        if 'FN' in key:
-            k = key[::-1][key[::-1].index('NF')+2:]
-            cnot_dict[k[:k.index('_')][::-1]] = val
-            del cnot_dict[key]
-        if '_qutrit_cphase_' in key:
-            k = key[len('20170317-h18m07s08_qutrit_'):]
-            cnot_dict[k] = val
-            del cnot_dict[key]
-
-    wfd = {}
-    for key, val in cnot_dict.items():
-        wfd[key] = pym8190a.elements.WaveFile(filepath=val, rp=pi3d.tt.rp('e_rabi', mixer_deg=-90))
-
-
-
-    def crot(nucstate):
-        sna.electron_rabi(mcas,
-                            name='electron pi',
-                            wave_file=wfd[nucstate],
-                            frequencies=pi3d.tt.mfl({'14N': [0]}),
-                            new_segment=False,
-                            mixer_deg=-90)
-
-    crot(nucstate)
