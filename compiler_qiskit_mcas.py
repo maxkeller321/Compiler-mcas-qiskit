@@ -72,15 +72,25 @@ def construct_list_with_json_from_QuantumCircuit_instance(quantum_circuit_instan
 
     return quantum_circuit_operations
 
+def match_integers_with_nuclear_spin(qubit_integer):
+    if qubit_integer == 0:
+        nuclear_spin = '14n'
+    elif qubit_integer == 1: 
+        nuclear_spin = '13c414'
+    elif qubit_integer == 2: 
+        nuclear_spin = '13c90'
+    else: 
+        raise Exception("qubit_integer must be between 0<=x<=2, but was {}".format(qubit_integer))
+    
+    return nuclear_spin
 
 class McasWriter:
     def __init__(self):
         self.mcas_line_list = [] # list of strings with the operations for the mcas file 
 
     def interprete_json_operations(self, gate_operation_json):
-
         if isinstance(gate_operation_json, Iterable):
-
+            
             for operation in gate_operation_json:
                 if 'qubit_index' in operation and 'operation_name' in operation and 'operation_params' in operation: 
                     qubit_index = operation['qubit_index'] 
@@ -115,7 +125,7 @@ class McasWriter:
                             raise Exception("Invalid qubit index encountered. Our system does only have 3 qubits: 0, 1 & 2")
             
                 elif 'controlled_qubit' in operation and 'controlling_qubit' in operation and 'operation_name' in operation:
-                    pass # Cnot Gate part is still missing
+                    self.add_cx(operation['controlled_qubit'], operation['controlling_qubit'])
 
                 elif 'operation_name' in operation: 
                     if operation['operation_name'] == 'measure': 
@@ -134,16 +144,18 @@ class McasWriter:
         self.mcas_line_list.append("rx_nitrogen(mcas, {}, ms={})".format(theta, ms))
     def add_ry_nitrogen(self, theta, ms=0):
         self.mcas_line_list.append("ry_nitrogen(mcas, {}, ms={})".format(theta, ms))
-    def add_rx_c_414(self, theta, ms=0):
+    def add_rx_c_414(self, theta, ms=-1):
         self.mcas_line_list.append("rx_carbon_414(mcas, {}, ms={})".format(theta, ms))
-    def add_ry_c_414(self, theta, ms=0):
+    def add_ry_c_414(self, theta, ms=-1):
         self.mcas_line_list.append("ry_carbon_414(mcas, {}, ms={})".format(theta, ms))
-    def add_rx_c_90(self, theta, ms=0):
+    def add_rx_c_90(self, theta, ms=-1):
         self.mcas_line_list.append("rx_carbon_90(mcas, {}, ms={})".format(theta, ms))
-    def add_ry_c_90(self, theta, ms=0):
+    def add_ry_c_90(self, theta, ms=-1):
         self.mcas_line_list.append("ry_carbon_90(mcas, {}, ms={})".format(theta, ms))
     def add_cx(self, controlled_qubit, controlling_qubit): 
-        print("...work in progress")
+        controlled_nuclear_spin = match_integers_with_nuclear_spin(controlled_qubit)
+        controlling_nuclear_spin = match_integers_with_nuclear_spin(controlling_qubit)
+        self.mcas_line_list.append("cnot_between_nuclear_spins(mcas, '{}', '{}')".format(controlled_nuclear_spin, controlling_nuclear_spin))
     def add_nuclear_spin_initialisation(self, state): 
         self.mcas_line_list.append("initialise_nuclear_spin_register(mcas, '{}')".format(state))
     def add_nuclear_spin_readout(self, state):

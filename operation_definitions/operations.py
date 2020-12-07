@@ -496,12 +496,15 @@ def nuclear_robust_rotation(mcas):
     in the making ... 
     """
 
+    """
     wave_file = E.WaveFile(filepath=sna.wfpd_standard[state],
                             rp=pi3d.tt.rabi_parameters['13c414 ms-1'])
 
     sna.nuclear_rabi(mcas,
                      name='Robust 13c414 pi',
                      frequencies=[
+    """
+    pass
 
 
 def electron_controlled_not(mcas, state): 
@@ -517,8 +520,7 @@ def electron_controlled_not(mcas, state):
     """
 
 
-    wave_file = E.WaveFile(sna.wfpd_standard[state]
-                            rp=pi3d.tt.rabi_parameters['e_rabi_ou350deg-90'])
+    wave_file = E.WaveFile(sna.wfpd_standard[state], rp=pi3d.tt.rabi_parameters['e_rabi_ou350deg-90'])
 
     sna.electron_rabi(mcas,
                         name='robust electron pi',
