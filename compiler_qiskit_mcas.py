@@ -10,6 +10,8 @@ from .header_footer_mcas import mcas_footer, mcas_header
 
 mcas_file_name = "mcas_test.py"
 indent_level = "\t\t\t"
+alias_for_operations = "op"
+
 
 def transpile_ciruit_for_diamond(quantum_circuit_instance):
     """
@@ -73,6 +75,13 @@ def construct_list_with_json_from_QuantumCircuit_instance(quantum_circuit_instan
     return quantum_circuit_operations
 
 def match_integers_with_nuclear_spin(qubit_integer):
+    """
+        this function maps the integer qubit representation to our corresponding 
+        nuclear spins
+        param: 
+            qubit_integer: qubit integer from qiskit (e.g: 0 or 1 or 2)
+    """
+
     if qubit_integer == 0:
         nuclear_spin = '14n'
     elif qubit_integer == 1: 
@@ -142,24 +151,51 @@ class McasWriter:
     
     def add_rx_nitrogen(self, theta, ms=0):
         self.mcas_line_list.append("rx_nitrogen(mcas, {}, ms={})".format(theta, ms))
+
     def add_ry_nitrogen(self, theta, ms=0):
         self.mcas_line_list.append("ry_nitrogen(mcas, {}, ms={})".format(theta, ms))
+
     def add_rx_c_414(self, theta, ms=-1):
+        self.add_bring_electron_spin_in_ms_minus_one()
         self.mcas_line_list.append("rx_carbon_414(mcas, {}, ms={})".format(theta, ms))
+        self.add_electron_spin_initialisation()
+
     def add_ry_c_414(self, theta, ms=-1):
+        self.add_bring_electron_spin_in_ms_minus_one()
         self.mcas_line_list.append("ry_carbon_414(mcas, {}, ms={})".format(theta, ms))
+        self.add_electron_spin_initialisation()
+
     def add_rx_c_90(self, theta, ms=-1):
+        self.add_bring_electron_spin_in_ms_minus_one()
         self.mcas_line_list.append("rx_carbon_90(mcas, {}, ms={})".format(theta, ms))
+        self.add_electron_spin_initialisation()
+
     def add_ry_c_90(self, theta, ms=-1):
+        self.add_bring_electron_spin_in_ms_minus_one()
         self.mcas_line_list.append("ry_carbon_90(mcas, {}, ms={})".format(theta, ms))
+        self.add_electron_spin_initialisation()
+
     def add_cx(self, controlled_qubit, controlling_qubit): 
         controlled_nuclear_spin = match_integers_with_nuclear_spin(controlled_qubit)
         controlling_nuclear_spin = match_integers_with_nuclear_spin(controlling_qubit)
         self.mcas_line_list.append("cnot_between_nuclear_spins(mcas, '{}', '{}')".format(controlled_nuclear_spin, controlling_nuclear_spin))
+
     def add_nuclear_spin_initialisation(self, state): 
         self.mcas_line_list.append("initialise_nuclear_spin_register(mcas, '{}')".format(state))
+
     def add_nuclear_spin_readout(self, state):
         self.mcas_line_list.append("readout_nuclear_spin_state(mcas, '{}')".format(state))
+    
+    def add_bring_electron_spin_in_ms_minus_one(self):
+        self.add_electron_pi()
+        self.add_electron_spin_initialisation()
+
+    def add_electron_spin_initialisation(self): 
+        self.mcas_line_list.append("initialise_with_red(mcas)")
+
+    def add_electron_pi(self):
+        self.mcas_line_list.append("electron_pi_pulse(mcas)")
+
 
     def write_mcas_file(self, destination): 
         with open(os.path.join(destination, mcas_file_name), 'w') as mcas_file: 
@@ -168,6 +204,7 @@ class McasWriter:
 
             # Operation content 
             for line in self.mcas_line_list:
+                line = ".".join((alias_for_operations, line))
                 indented_line = textwrap.indent(text=line, prefix=indent_level) 
                 mcas_file.writelines(indented_line + '\n')
             
