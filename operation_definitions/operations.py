@@ -334,7 +334,7 @@ def get_transition(nucleus, ms=0, mn=1):
     return transition
 
 
-def readout_nuclear_spin_state(mcas, state, step_idx=0): 
+def readout_nuclear_spin_state(mcas, state, ssr_repetitions=None, step_idx=0): 
     """
         Appends a single shot readout sequence of a certain nuclear spin state to the passed mcas.
         params: 
@@ -343,6 +343,8 @@ def readout_nuclear_spin_state(mcas, state, step_idx=0):
                 Pick one from:  ['+++', '++-', '+-+', '+--', '0++', '0+-',
                             '0-+', '0--', '-++', '-+-', '--+', '---',
                                 'n+', 'nn+', '+', '-', '0']
+            ssr_repetitions: number of overall ssr repetitions 
+                (number of MW-pulses = number of green readouts = 2*ssr_repetitions) 
             step_idx: If multiple SSR's are used, the step_idx must refer to the corresponding ssr 
                 e.g.: (first ssr: step_idx = 0, second ssr: step_idx = 1 ...)
     """
@@ -378,6 +380,10 @@ def readout_nuclear_spin_state(mcas, state, step_idx=0):
             raise Exception("Inserted state is not correct")
         
     nucleus = get_nuclei(state)
+
+    if ssr_repetitions == None: 
+        ssr_repetitions = sna.__SSR_REPETITIONS__[nucleus]
+
     if (nucleus == '13c90' and state.count('n') == 2) or nucleus == '13c414':
 
         wave_file_kwargs_all_but_standard = dict(filepath=sna.wfpd_standard[get_inverse_state(state)], rp=pi3d.tt.rp('e_rabi', mixer_deg=-90))
@@ -391,11 +397,11 @@ def readout_nuclear_spin_state(mcas, state, step_idx=0):
                 nuc=nucleus,
                 frequencies=[pi3d.tt.mfl({'14n': [0]}), pi3d.tt.mfl({'14n': [0]})], # frequencies are not used, when we pass a wavefile to the ssr
                 wave_file_kwargs=[wave_file_kwargs_all, wave_file_kwargs_all_but_standard],
-                repetitions=sna.__SSR_REPETITIONS__[nucleus],
+                repetitions=ssr_repetitions,
                 step_idx=step_idx)
 
     else:
-        sna.ssr_single_state(mcas, state, repetitions=sna.__SSR_REPETITIONS__[nucleus], step_idx=step_idx)
+        sna.ssr_single_state(mcas, state, repetitions=ssr_repetitions, step_idx=step_idx)
         
 
 def initialise_nuclear_spin_register(mcas, state):
