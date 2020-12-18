@@ -191,7 +191,7 @@ def ry_electron(mcas, theta, nuclear_spin_state, amp=1.0, mixer_deg=-90):
 
 def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
     """
-        rx rotation applied on the nitrogen nuclear spin. The nitrogen sublevels mn = 0, 1 are used for computation & the electron sublevels ms = 0, -1 
+        rotation applied on the nitrogen nuclear spin. The nitrogen sublevels mn = 0, 1 are used for computation & the electron sublevels ms = 0, -1 
         params: 
             mcas: instance of the Multi-channel-sequence class
             theta: rotation angle in rad must be in the range  of -2pi <= theta <= 2pi
@@ -206,7 +206,7 @@ def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
     theta, phase = get_optimised_angle_and_phase(theta, rotation_axis)
 
     scaling_factor = theta/np.pi 
-    lenth_mus =  E.round_length_mus_full_sample(pi3d.tt.rp(transition, amp=amp).pi*scaling_factor) 
+    lenth_mus =  E.round_length_mus_full_sample(pi3d.tt.rp(transition, amp=amp).pi*2*scaling_factor) 
 
     sna.nuclear_rabi(mcas,
                     name=transition,
