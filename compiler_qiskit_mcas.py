@@ -181,7 +181,7 @@ class McasWriter:
         self.mcas_line_list.append("cnot_between_nuclear_spins(mcas, '{}', '{}')".format(controlled_nuclear_spin, controlling_nuclear_spin))
 
     def add_nuclear_spin_initialisation(self, state): 
-        self.mcas_line_list.append("initialise_nuclear_spin_register(mcas, '{}')".format(state))
+        self.mcas_line_list.append("full_initialisation(mcas, '{}')".format(state))
 
     def add_nuclear_spin_readout(self, state):
         self.mcas_line_list.append("readout_nuclear_spin_state(mcas, '{}')".format(state))
