@@ -451,7 +451,7 @@ def initialise_with_red(mcas):
 
 def full_initialisation(mcas, state): 
     """
-        Append a full initialisation procedure to the mcas instance. 
+        Append a full initialisation procedure to the mcas instance (postselections, ... ). 
         params: 
             state: state in which the register should be initialised 
                 Pick one from:  ['+++', '++-', '+-+', '+--', '0++', '0+-',

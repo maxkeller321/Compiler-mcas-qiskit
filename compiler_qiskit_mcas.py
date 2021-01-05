@@ -187,8 +187,8 @@ class McasWriter:
         self.mcas_line_list.append("readout_nuclear_spin_state(mcas, '{}')".format(state))
     
     def add_bring_electron_spin_in_ms_minus_one(self):
-        self.add_electron_pi()
         self.add_electron_spin_initialisation()
+        self.add_electron_pi()
 
     def add_electron_spin_initialisation(self): 
         self.mcas_line_list.append("initialise_with_red(mcas)")
