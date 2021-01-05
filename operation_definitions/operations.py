@@ -206,16 +206,16 @@ def nuclear_rotation(mcas, theta, rotation_axis, transition, amp):
     theta, phase = get_optimised_angle_and_phase(theta, rotation_axis)
 
     scaling_factor = theta/np.pi 
-    lenth_mus =  E.round_length_mus_full_sample(pi3d.tt.rp(transition, amp=amp).pi*2*scaling_factor) 
+    length_mus =  E.round_length_mus_full_sample(pi3d.tt.rp(transition, amp=amp).pi*scaling_factor)
 
     sna.nuclear_rabi(mcas,
                     name=transition,
                     frequencies=[pi3d.tt.t(transition).current_frequency],
                     amplitudes=[amp],
                     phases=[phase],
-                    length_mus=lenth_mus,
+                    length_mus=length_mus,
                     new_segment=True)
-    mcas.asc(length_mus=10) # delay for RF field fluctuations
+    mcas.asc(length_mus=0.5, name='waitmwrf') # delay for RF field fluctuations
 
 def electron_rotation(mcas, theta, rotation_axis, nuclear_spin_state, amp=1.0, mixer_deg=-90):
     """
@@ -247,8 +247,8 @@ def electron_rotation(mcas, theta, rotation_axis, nuclear_spin_state, amp=1.0, m
 
 def get_optimised_angle_and_phase(theta, rotation_axis):
     """
-        optimises the angle theta (e.g rotation theta > np.pi --> makes more sense to go for a negative rotation )
-        and returns the correct phase for the AWG
+        optimises the angle theta (e.g rotation theta > np.pi --> makes more sense to go for a negative rotation)
+        and returns the correct phase for the AWG RF and MW pulses
         params: 
             theta: rotation angle in rad must be in the range of -2pi <= theta <= 2pi
             rotation_axis: axis of rotation 'x' or 'y' (to make an rotation around 'z' use another function)
@@ -300,7 +300,7 @@ def get_transition(nucleus, ms=0, mn=1):
             nucleus: "14n", '13c414' or '13c90'
             ms: electron spin state in the moment: -1, 0, +1
             mn: nitrogen nuclear spins state: can just be mn =+/-1: mn =+1 stands for the transition between mn = 0 & mn = +1 and 
-             mn = -1 for the transition between mn = 0 & mn = -1 
+                mn = -1 for the transition between mn = 0 & mn = -1 
     """
 
     if "14n" in nucleus.lower():
@@ -432,7 +432,7 @@ def initialise_nuclear_spin_register(mcas, state):
     else:
         raise Exception("Invalid state datatype! state must be of type string!")
 
-def initialise_electron_spin(mcas): 
+def initialise_with_green(mcas): 
     """
         Append an electron spin initialisation into ms=0
         Params: 
@@ -447,15 +447,19 @@ def initialise_with_red(mcas):
             mcas: instance of the Multi-channel-sequence class
     """
     sna.polarize(mcas, new_segment=True)
+    mcas.asc(length_mus=0.5, name='waitmwrf') # delay for RF field fluctuations
 
 
-def cnot_between_nuclear_spins(mcas, controlled_qubit, controlling_qubit): 
+
+def crot_pi_between_nuclear_spins(mcas, controlled_qubit, controlling_qubit): 
     """
-        Not all combinations are tested but works quit stable! This function should append a controlled not gate to the mcas between two nuclei!  
+        This function appends a controlled pi rotation between two nuclei around the x-axis to the mcas!  
         params: 
             mcas: instance of the Multi-channel-sequence class
             controlled_qubit: controlled nuclear spin: (14n, 13c414, or 13c90) 
             controlling_qubit: controlling nuclear spin: (14n, 13c414, or 13c90) 
+
+        Note: All combinations are tested. The different fidelities can be found in OneNote. 
     """
 
     if type(controlling_qubit) != str or type(controlled_qubit) != str: 
@@ -497,6 +501,9 @@ def electron_pi_pulse(mcas, ms_transition='left'):
                                     frequencies=pi3d.tt.mfl({'14n': [0]}, ms_trans={'left':'-1', 'right':'+1'}[ms_transition]),
                                     new_segment=True)
 
+    mcas.asc(length_mus=0.5, name='waitmw') # delay for MW field fluctuations
+
+
 def nuclear_robust_rotation(mcas):
     """
     in the making ... 
@@ -516,15 +523,15 @@ def nuclear_robust_rotation(mcas):
 def electron_controlled_not(mcas, state): 
     """ 
         Adds an robust electron controlled not gates to the mcas, which is dependent on a certain nuclear spin state. 
-        Note: (It uses the optimal control pulses from snippets)
         params: 
             mcas: instance of the Multi-channel-sequence class
             state: nuclear spin state on which the electron rotation should be dependend 
                 Pick one from:  ['+++', '++-', '+-+', '+--', '0++', '0+-',
                             '0-+', '0--', '-++', '-+-', '--+', '---',
                                 'n+', 'nn+', '+', '-', '0']
-    """
 
+        Note: (It uses the optimal control pulses from snippets)
+    """
 
     wave_file = E.WaveFile(filepath=sna.wfpd_standard[state], rp=pi3d.tt.rabi_parameters['e_rabi_ou350deg-90'])
 
