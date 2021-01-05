@@ -449,6 +449,44 @@ def initialise_with_red(mcas):
     sna.polarize(mcas, new_segment=True)
     mcas.asc(length_mus=0.5, name='waitmwrf') # delay for RF field fluctuations
 
+def full_initialisation(mcas, state): 
+    """
+        Append a full initialisation procedure to the mcas instance. 
+        params: 
+            state: state in which the register should be initialised 
+                Pick one from:  ['+++', '++-', '+-+', '+--', '0++', '0+-',
+                                '0-+', '0--', '-++', '-+-', '--+', '---',
+                                    'n+', 'nn+', '+', '-', '0']
+
+        The initialisation is composed of: 
+            1. normal SWAP initialisation in state
+            2. SSR readout of the state for postselection (450 SSR single state reps)
+            3. Electron spin initialisation into ms=0 with red laser light
+            4. Charge state initialisation ~73% into NV^- with green laser light
+            5. Charge state readout with orange laser light 800mus for postselection (Uses charge state SSR)
+                --> Good count threshold is >=3 (if laser power is not changed) 
+        
+        Note: When this initialisation is used, the measurement will consist in the end at least out of 3-SSRs!
+            (Do not forget the analyze sequences and to use in the last ssr step_idx=2)
+    """ 
+
+    if state in state_list: 
+        # 1.
+        initialise_nuclear_spin_register(mcas, state)
+        # 2.
+        readout_nuclear_spin_state(mcas, state, ssr_repetitions=450, step_idx=0)
+        # 3. 
+        initialise_with_green(mcas)
+        # 4.
+        initialise_with_red(mcas)
+        # 5. 
+        freq = pi3d.tt.mfl({'14N': [+1]}, ms_trans='0')
+        sna.ssr(mcas, frequencies=freq, wait_dur=0.0, robust=False, nuc='charge_state', mixer_deg=-90, step_idx=1, laser_dur=800.0)
+    else: 
+        raise Exception("The entered state is not valid. State must be one of: \n {}".format(state_list))  
+            
+
+
 
 
 def crot_pi_between_nuclear_spins(mcas, controlled_qubit, controlling_qubit): 
