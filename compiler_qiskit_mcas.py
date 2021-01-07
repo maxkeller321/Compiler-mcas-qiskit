@@ -156,24 +156,24 @@ class McasWriter:
         self.mcas_line_list.append("ry_nitrogen(mcas, {}, ms={})".format(theta, ms))
 
     def add_rx_c_414(self, theta, ms=-1):
-        self.add_bring_electron_spin_in_ms_minus_one()
+        self.add_electron_pi()
         self.mcas_line_list.append("rx_carbon_414(mcas, {}, ms={})".format(theta, ms))
-        self.add_electron_spin_initialisation()
+        self.add_electron_pi()
 
     def add_ry_c_414(self, theta, ms=-1):
-        self.add_bring_electron_spin_in_ms_minus_one()
+        self.add_electron_pi()
         self.mcas_line_list.append("ry_carbon_414(mcas, {}, ms={})".format(theta, ms))
-        self.add_electron_spin_initialisation()
+        self.add_electron_pi()
 
     def add_rx_c_90(self, theta, ms=-1):
-        self.add_bring_electron_spin_in_ms_minus_one()
+        self.add_electron_pi()
         self.mcas_line_list.append("rx_carbon_90(mcas, {}, ms={})".format(theta, ms))
-        self.add_electron_spin_initialisation()
+        self.add_electron_pi()
 
     def add_ry_c_90(self, theta, ms=-1):
-        self.add_bring_electron_spin_in_ms_minus_one()
+        self.add_electron_pi()
         self.mcas_line_list.append("ry_carbon_90(mcas, {}, ms={})".format(theta, ms))
-        self.add_electron_spin_initialisation()
+        self.add_electron_pi()
 
     def add_cx(self, controlled_qubit, controlling_qubit): 
         controlled_nuclear_spin = match_integers_with_nuclear_spin(controlled_qubit)
@@ -186,13 +186,6 @@ class McasWriter:
     def add_nuclear_spin_readout(self, state):
         self.mcas_line_list.append("readout_nuclear_spin_state(mcas, '{}')".format(state))
     
-    def add_bring_electron_spin_in_ms_minus_one(self):
-        self.add_electron_spin_initialisation()
-        self.add_electron_pi()
-
-    def add_electron_spin_initialisation(self): 
-        self.mcas_line_list.append("initialise_with_red(mcas)")
-
     def add_electron_pi(self):
         self.mcas_line_list.append("electron_pi_pulse(mcas)")
 
