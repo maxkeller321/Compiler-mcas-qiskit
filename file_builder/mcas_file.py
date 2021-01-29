@@ -1,5 +1,50 @@
+import os 
+import textwrap
+
+
 operations_file_name = "operations"
 operations_folder_name = "operation_definitions"
+indent_level = "\t\t\t"
+alias_for_operations = "op"
+
+class Mcas_file: 
+
+    def __init__(self, sequences, parameters=None):
+        self.__content = ""
+        self.add_header()
+        self.add_sequence_part(sequences)
+        self.add_settings()
+        self.add_nuclear_params(parameters)
+        self.add_run_fun()
+    
+    def get_content(self): 
+        return self.__content
+
+    def add_header(self): 
+        self.__content += mcas_header
+
+    def add_nuclear_params(self, parameters): 
+        self.__content += ("\tnuclear.parameters = OrderedDict(\n"
+        "\t\t(\n")
+        if isinstance(parameters, list):
+            for param in parameters: 
+                self.__content += "\t\t\t{}\n".format(param)
+        self.__content += "\t\t)\n\t)\n"
+    
+    def add_sequence_part(self, sequences): 
+        if isinstance(sequences, list):
+            for line in sequences:
+                line = ".".join((alias_for_operations, line))
+                indented_line = textwrap.indent(text=line, prefix=indent_level) 
+                self.__content += indented_line + '\n'
+        else:
+            raise TypeError("The sequences must be in a list!")
+
+    def add_settings(self): 
+        self.__content += mcas_settings
+    
+    def add_run_fun(self): 
+        self.__content += run_fun
 
 
 mcas_header = ("# coding=utf-8 \n" 
@@ -21,7 +66,7 @@ mcas_header = ("# coding=utf-8 \n"
 
 
 
-mcas_footer= ("\n\t\t\tpi3d.gated_counter.set_n_values(mcas)\n"
+mcas_settings = ("\n\t\t\tpi3d.gated_counter.set_n_values(mcas)\n"
 "\t\treturn mcas\n"
 "\treturn ret_mcas\n \n"
 "def settings(pdc={}):\n"
@@ -41,14 +86,12 @@ mcas_footer= ("\n\t\t\tpi3d.gated_counter.set_n_values(mcas)\n"
 "\tpi3d.gated_counter.trace.analyze_type = 'standard'\n"
 "\tpi3d.gated_counter.trace.consecutive_valid_result_numbers = [0]\n"
 "\tpi3d.gated_counter.trace.average_results = True\n\n"
-"\tnuclear.parameters = OrderedDict(\n"
-"\t\t(\n"
-"\t\t\t('sweeps', range(30)),\n"
-"\t\t)\n"
-"\t)\n"
-"\tnuclear.number_of_simultaneous_measurements = 1\n\n" 
-"def run_fun(abort, **kwargs):\n"
+"\tnuclear.number_of_simultaneous_measurements = 1\n\n")
+
+
+run_fun = ("def run_fun(abort, **kwargs):\n"
 "\tpi3d.readout_duration = 150e6\n"
 "\tnuclear.debug_mode = False\n"
 "\tsettings()\n"
 "\tnuclear.run(abort)")
+

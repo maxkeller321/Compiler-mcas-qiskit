@@ -1,17 +1,16 @@
 from qiskit import QuantumCircuit
 from qiskit.compiler import transpile
 from qiskit.compiler.transpile import CouplingMap
+from qiskit.circuit import Parameter
+
 import numpy as np 
 import textwrap
 import os 
 from collections.abc import Iterable
-from .header_footer_mcas import mcas_footer, mcas_header
+from .file_builder import Mcas_file
 
 
 mcas_file_name = "mcas_test.py"
-indent_level = "\t\t\t"
-alias_for_operations = "op"
-
 
 def transpile_ciruit_for_diamond(quantum_circuit_instance):
     """
@@ -55,10 +54,15 @@ def construct_list_with_json_from_QuantumCircuit_instance(quantum_circuit_instan
 
         gate_instance = gate_data[0]
         operation_name = gate_instance.name 
-        gate_params = gate_instance.params
+        if len(gate_instance.params) > 0: 
+            gate_params = gate_instance.params[0]
+            if isinstance(gate_params, Parameter): 
+                operation_json['operation_params'] = gate_params.name
+                operation_json['operation_params_iterable'] = gate_params.values
+            else: 
+                operation_json['operation_params'] = gate_params
 
         operation_json['operation_name'] = operation_name
-        operation_json['operation_params'] = gate_params
 
         if gate_instance.num_qubits == 2: 
             controlled_qubit = gate_data[1][1].index
@@ -95,7 +99,8 @@ def match_integers_with_nuclear_spin(qubit_integer):
 
 class McasWriter:
     def __init__(self):
-        self.mcas_line_list = [] # list of strings with the operations for the mcas file 
+        self.mcas_sequence_list = [] # list of strings with the operations for the mcas file
+        self.list_of_iterables = [] # list of strings with the iterable parameters (for e.g. rabis)
 
     def interprete_json_operations(self, gate_operation_json):
         if isinstance(gate_operation_json, Iterable):
@@ -104,29 +109,33 @@ class McasWriter:
                 if 'qubit_index' in operation and 'operation_name' in operation and 'operation_params' in operation: 
                     qubit_index = operation['qubit_index'] 
 
+                    if 'operation_params_iterable' in operation: 
+                        self.add_iterable_parameter(operation['operation_params'], operation['operation_params_iterable'])
+                        operation['operation_params'] = "_I_['{}']".format(operation['operation_params'])
+
                     if operation['operation_name'] not in ['barrier', 'measure']:
                         if qubit_index == 0: 
                             if operation['operation_name'] == 'rx': 
-                                self.add_rx_nitrogen(operation['operation_params'][0])
+                                self.add_rx_nitrogen(operation['operation_params'])
                             elif operation['operation_name'] == 'ry': 
-                                self.add_ry_nitrogen(operation['operation_params'][0])
+                                self.add_ry_nitrogen(operation['operation_params'])
                             else: 
                                 raise Exception("Invalid operation encountered in qubit {} the operation json" \
                                             "Only rx, ry and cnot are valid for our Backend.".format(qubit_index))
                         elif qubit_index == 1: 
                             if operation['operation_name'] == 'rx': 
-                                self.add_rx_c_414(operation['operation_params'][0])
+                                self.add_rx_c_414(operation['operation_params'])
                             elif operation['operation_name'] == 'ry': 
-                                self.add_ry_c_414(operation['operation_params'][0])
+                                self.add_ry_c_414(operation['operation_params'])
                             else: 
                                 raise Exception("Invalid operation encountered in qubit {} the operation json" \
                                             "Only rx, ry and cnot are valid for our Backend.".format(qubit_index))
 
                         elif qubit_index == 2: 
                             if operation['operation_name'] == 'rx': 
-                                self.add_rx_c_90(operation['operation_params'][0])
+                                self.add_rx_c_90(operation['operation_params'])
                             elif operation['operation_name'] == 'ry': 
-                                self.add_ry_c_90(operation['operation_params'][0])
+                                self.add_ry_c_90(operation['operation_params'])
                             else: 
                                 raise Exception("Invalid operation encountered in qubit {} the operation json" \
                                             "Only rx, ry and cnot are valid for our Backend.".format(qubit_index))
@@ -150,56 +159,51 @@ class McasWriter:
             raise Exception("{} is not iterable!. Insert a valid list with json operations!".format(gate_operation_json))
     
     def add_rx_nitrogen(self, theta, ms=0):
-        self.mcas_line_list.append("rx_nitrogen(mcas, {}, ms={})".format(theta, ms))
+        self.mcas_sequence_list.append("rx_nitrogen(mcas, {}, ms={})".format(theta, ms))
 
     def add_ry_nitrogen(self, theta, ms=0):
-        self.mcas_line_list.append("ry_nitrogen(mcas, {}, ms={})".format(theta, ms))
+        self.mcas_sequence_list.append("ry_nitrogen(mcas, {}, ms={})".format(theta, ms))
 
     def add_rx_c_414(self, theta, ms=-1):
         self.add_electron_pi()
-        self.mcas_line_list.append("rx_carbon_414(mcas, {}, ms={})".format(theta, ms))
+        self.mcas_sequence_list.append("rx_carbon_414(mcas, {}, ms={})".format(theta, ms))
         self.add_electron_pi()
 
     def add_ry_c_414(self, theta, ms=-1):
         self.add_electron_pi()
-        self.mcas_line_list.append("ry_carbon_414(mcas, {}, ms={})".format(theta, ms))
+        self.mcas_sequence_list.append("ry_carbon_414(mcas, {}, ms={})".format(theta, ms))
         self.add_electron_pi()
 
     def add_rx_c_90(self, theta, ms=-1):
         self.add_electron_pi()
-        self.mcas_line_list.append("rx_carbon_90(mcas, {}, ms={})".format(theta, ms))
+        self.mcas_sequence_list.append("rx_carbon_90(mcas, {}, ms={})".format(theta, ms))
         self.add_electron_pi()
 
     def add_ry_c_90(self, theta, ms=-1):
         self.add_electron_pi()
-        self.mcas_line_list.append("ry_carbon_90(mcas, {}, ms={})".format(theta, ms))
+        self.mcas_sequence_list.append("ry_carbon_90(mcas, {}, ms={})".format(theta, ms))
         self.add_electron_pi()
 
     def add_cx(self, controlled_qubit, controlling_qubit): 
         controlled_nuclear_spin = match_integers_with_nuclear_spin(controlled_qubit)
         controlling_nuclear_spin = match_integers_with_nuclear_spin(controlling_qubit)
-        self.mcas_line_list.append("cnot_between_nuclear_spins(mcas, '{}', '{}')".format(controlled_nuclear_spin, controlling_nuclear_spin))
+        self.mcas_sequence_list.append("cnot_between_nuclear_spins(mcas, '{}', '{}')".format(controlled_nuclear_spin, controlling_nuclear_spin))
 
     def add_nuclear_spin_initialisation(self, state): 
-        self.mcas_line_list.append("full_initialisation(mcas, '{}')".format(state))
+        self.mcas_sequence_list.append("full_initialisation(mcas, '{}')".format(state))
 
     def add_nuclear_spin_readout(self, state):
-        self.mcas_line_list.append("readout_nuclear_spin_state(mcas, '{}')".format(state))
+        self.mcas_sequence_list.append("readout_nuclear_spin_state(mcas, '{}')".format(state))
     
     def add_electron_pi(self):
-        self.mcas_line_list.append("electron_pi_pulse(mcas)")
+        self.mcas_sequence_list.append("electron_pi_pulse(mcas)")
 
+    def add_iterable_parameter(self, name, iterable): 
+        self.list_of_iterables.append("('{}', {}),".format(name, list(iterable)))
 
     def write_mcas_file(self, destination): 
-        with open(os.path.join(destination, mcas_file_name), 'w') as mcas_file: 
+        mcas_file = Mcas_file(self.mcas_sequence_list, parameters=self.list_of_iterables)
+        with open(os.path.join(destination, mcas_file_name), 'w') as output_file: 
+            output_file.write(mcas_file.get_content())
             
-            mcas_file.write(mcas_header)
-
-            # Operation content 
-            for line in self.mcas_line_list:
-                line = ".".join((alias_for_operations, line))
-                indented_line = textwrap.indent(text=line, prefix=indent_level) 
-                mcas_file.writelines(indented_line + '\n')
-            
-            mcas_file.write(mcas_footer)
 
