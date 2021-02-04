@@ -31,25 +31,19 @@ def transpile_ciruit_for_diamond(quantum_circuit_instance):
 
     return transpiled_qc
 
-
-def construct_list_with_json_from_QuantumCircuit_instance(quantum_circuit_instance): 
+def construct_operation_list_from_qc_json(qc_data):
     """
-        constructs a list of json objects from a qiskit QuantumCircuit instance
-        where each json object contains the important data for a single gate/ operation
+        Constructs a list of json objects from the json data of a QuantumCircuit instance.
+        Each json object contains the data for a single gate/ operation
         The order in the list is equivalent to the execution order for the quantum computer.
         params: 
-            quantum_circuit_instance: instance of quantum_circuit_instance
+            qc_data: json data of QuantumCircuit
         return: 
             list of json objects where each object contains the important data for a single gate/ operation
     """
+    qc_operations = []
 
-    if not isinstance(quantum_circuit_instance, QuantumCircuit): 
-        raise Exception("The passed instance (quantum_circuit_instance) must come from the qiskit class QuantumCircuit")
-    
-    quantum_circuit_operations = []
-    quantum_circuit_data = quantum_circuit_instance.data
-
-    for gate_data in quantum_circuit_data:
+    for gate_data in qc_data:
         operation_json = {}
 
         gate_instance = gate_data[0]
@@ -73,10 +67,28 @@ def construct_list_with_json_from_QuantumCircuit_instance(quantum_circuit_instan
             qubit_index = gate_data[1][0].index
             operation_json['qubit_index'] = qubit_index
 
-        
-        quantum_circuit_operations.append(operation_json)
+        qc_operations.append(operation_json)
 
-    return quantum_circuit_operations
+    return qc_operations
+
+def construct_operation_list_from_qc_instance(qc_instance): 
+    """
+        Constructs a list of json objects from a qiskit QuantumCircuit instance.
+        Each json object contains the data for a single gate/ operation.
+        The order in the list is equivalent to the execution order for the quantum computer.
+        params: 
+            qc_instance: instance of QuantumCircuit
+        return: 
+            list of json objects where each object contains the important data for a single gate/ operation
+    """
+
+    if not isinstance(qc_instance, QuantumCircuit): 
+        raise Exception("The passed instance (quantum_circuit_instance) must come from the qiskit class QuantumCircuit")
+    
+    quantum_circuit_data = qc_instance.data
+
+    return construct_operation_list_from_qc_json(quantum_circuit_data)
+
 
 def match_integers_with_nuclear_spin(qubit_integer):
     """
@@ -97,7 +109,12 @@ def match_integers_with_nuclear_spin(qubit_integer):
     
     return nuclear_spin
 
-class McasWriter:
+class McasTranslator:
+    """
+    Contains all functions to translate a list of json quantum-operations 
+    into an mcas file which can be executed from our worker
+    """
+
     def __init__(self):
         self.mcas_sequence_list = [] # list of strings with the operations for the mcas file
         self.list_of_iterables = [] # list of strings with the iterable parameters (for e.g. rabis)
@@ -147,7 +164,14 @@ class McasWriter:
 
                 elif 'operation_name' in operation: 
                     if operation['operation_name'] == 'measure': 
-                        pass 
+                        if operation['qubit_index'] == 0: 
+                            self.add_nuclear_spin_readout('0')
+                        elif operation['qubit_index'] == 1:
+                            self.add_nuclear_spin_readout('n-')
+                        elif operation['qubit_index'] == 2:
+                            self.add_nuclear_spin_readout('nn-')
+                        else: 
+                            raise Exception("Invalid qubit index encountered. Our system does only have 3 qubits: 0, 1 & 2")
                     elif operation['operation_name'] == 'barrier': 
                         pass
                     else: 
