@@ -6,11 +6,10 @@ from qiskit.circuit import Parameter
 import numpy as np 
 import textwrap
 import os 
+import time
 from collections.abc import Iterable
 from .file_builder import Mcas_file
 
-
-mcas_file_name = "mcas_test.py"
 
 def transpile_ciruit_for_diamond(quantum_circuit_instance):
     """
@@ -30,6 +29,30 @@ def transpile_ciruit_for_diamond(quantum_circuit_instance):
     transpiled_qc = transpile(quantum_circuit_instance, coupling_map=CM, basis_gates=basis_gates, optimization_level=3, seed_transpiler=1)
 
     return transpiled_qc
+
+def construct_full_mcas_file(transpiled_circuit_json, username, initial_state, readout_state, desired_file_path): 
+    """
+        Takes the qc.data received from the Website and converts it into a mcas_file
+        with a timestamp and the username included in the filename. 
+        
+        params: 
+            transpiled_circuit_json: json data of QuantumCircuit, can be obtained by calling qc.data
+            username: Username of the code submitter, to create a mapping between him and the mcas_file
+            initial_state: state in which the nv center should be initialised 
+            readout_state: state which should be read out by ssr-single-state
+    """
+    
+    operation_json = construct_operation_list_from_qc_json(transpiled_circuit_json)
+    mcas_writer = McasTranslator()
+    mcas_writer.add_nuclear_spin_initialisation(initial_state)
+    mcas_writer.interprete_json_operations(operation_json)
+    mcas_writer.add_nuclear_spin_readout(readout_state)
+
+    time_created = int(time.time())
+    file_name = '_'.join(('mcas_file', username, str(time_created)))
+    mcas_writer.write_mcas_file(desired_file_path, file_name)
+
+
 
 def construct_operation_list_from_qc_json(qc_data):
     """
@@ -225,9 +248,9 @@ class McasTranslator:
     def add_iterable_parameter(self, name, iterable): 
         self.list_of_iterables.append("('{}', {}),".format(name, list(iterable)))
 
-    def write_mcas_file(self, destination): 
+    def write_mcas_file(self, destination, mcas_file_name): 
         mcas_file = Mcas_file(self.mcas_sequence_list, parameters=self.list_of_iterables)
-        with open(os.path.join(destination, mcas_file_name), 'w') as output_file: 
+        with open(os.path.join(destination, mcas_file_name + '.py'), 'w') as output_file: 
             output_file.write(mcas_file.get_content())
             
 
