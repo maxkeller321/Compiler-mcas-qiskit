@@ -10,6 +10,40 @@ import time
 from collections.abc import Iterable
 from .file_builder import Mcas_file
 
+state_list = ['+++', '++-', '+-+', '+--', '0++', '0+-',
+                    '0-+', '0--', '-++', '-+-', '--+', '---',
+                    'n+', 'n-', 'nn+', 'nn-', '+', '-', '0']
+
+
+def get_initial_and_final_NV_state(qc):
+    """
+        Returns the initial as well as final state in case they were specified by the users 
+            If they were not specified a None is returned
+        Input: 
+            qc: Instance of qiskits QuantumCircuit
+        Returns: 
+            initial_state: Inital NV-State or None  
+            readout_state: Final NV-State or None 
+    """
+    if isinstance(qc, QuantumCircuit):
+        initial_state = None
+        readout_state = None
+        for param in list(qc.parameters): 
+            if 'initial_state' == param.name: 
+                initial_state = param.values
+            if 'readout_state' == param.name: 
+                readout_state = param.values
+
+    return initial_state, readout_state
+
+def format_state(state): 
+    state.replace("1", '+')
+    state.replace("0", '-')
+
+    if state not in state_list: 
+        state = '+++'
+
+    return state 
 
 def transpile_ciruit_for_diamond(quantum_circuit_instance):
     """
@@ -30,19 +64,19 @@ def transpile_ciruit_for_diamond(quantum_circuit_instance):
 
     return transpiled_qc
 
-def construct_full_mcas_file(transpiled_circuit_json, username, initial_state, readout_state, desired_file_path): 
+def construct_full_mcas_file(qc, username, desired_file_path): 
     """
-        Takes the qc.data received from the Website and converts it into a mcas_file
+        Takes the qc instance received from the Website and converts it into a mcas_file
         with a timestamp and the username included in the filename. 
         
         params: 
-            transpiled_circuit_json: json data of QuantumCircuit, can be obtained by calling qc.data
+            qc: instance of QuantumCircuit
             username: Username of the code submitter, to create a mapping between him and the mcas_file
-            initial_state: state in which the nv center should be initialised 
-            readout_state: state which should be read out by ssr-single-state
     """
-    
-    operation_json = construct_operation_list_from_qc_json(transpiled_circuit_json)
+    initial_state, readout_state = get_initial_and_final_NV_state(qc)
+    transpiled_circuit = transpile_ciruit_for_diamond(qc)
+    operation_json = construct_operation_list_from_qc_instance(transpiled_circuit)
+
     mcas_writer = McasTranslator()
     mcas_writer.add_nuclear_spin_initialisation(initial_state)
     mcas_writer.interprete_json_operations(operation_json)
@@ -186,19 +220,10 @@ class McasTranslator:
                     self.add_cx(operation['controlled_qubit'], operation['controlling_qubit'])
 
                 elif 'operation_name' in operation: 
-                    if operation['operation_name'] == 'measure': 
-                        if operation['qubit_index'] == 0: 
-                            self.add_nuclear_spin_readout('0')
-                        elif operation['qubit_index'] == 1:
-                            self.add_nuclear_spin_readout('n-')
-                        elif operation['qubit_index'] == 2:
-                            self.add_nuclear_spin_readout('nn-')
-                        else: 
-                            raise Exception("Invalid qubit index encountered. Our system does only have 3 qubits: 0, 1 & 2")
-                    elif operation['operation_name'] == 'barrier': 
+                    if operation['operation_name'] == 'barrier': 
                         pass
                     else: 
-                        raise Exception("The passed operation is not valid!")
+                        raise Exception("The passed operation: {} is not supported!".format(operation['operation_name']))
                     
                 else: 
                     raise Exception("The passed operation is not valid!")
@@ -237,9 +262,11 @@ class McasTranslator:
         self.mcas_sequence_list.append("cnot_between_nuclear_spins(mcas, '{}', '{}')".format(controlled_nuclear_spin, controlling_nuclear_spin))
 
     def add_nuclear_spin_initialisation(self, state): 
+        state = format_state(state)
         self.mcas_sequence_list.append("full_initialisation(mcas, '{}')".format(state))
 
     def add_nuclear_spin_readout(self, state):
+        state = format_state(state)
         self.mcas_sequence_list.append("readout_nuclear_spin_state(mcas, '{}')".format(state))
     
     def add_electron_pi(self):
