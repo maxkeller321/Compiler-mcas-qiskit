@@ -10,11 +10,6 @@ import time
 from collections.abc import Iterable
 from .file_builder import Mcas_file
 
-state_list = ['+++', '++-', '+-+', '+--', '0++', '0+-',
-                    '0-+', '0--', '-++', '-+-', '--+', '---',
-                    'n+', 'n-', 'nn+', 'nn-', '+', '-', '0']
-
-
 def get_initial_and_final_NV_state(qc):
     """
         Returns the initial as well as final state in case they were specified by the users 
@@ -26,8 +21,8 @@ def get_initial_and_final_NV_state(qc):
             readout_state: Final NV-State or None 
     """
     if isinstance(qc, QuantumCircuit):
-        initial_state = None
-        readout_state = None
+        initial_state = 'None'
+        readout_state = 'None'
         for param in list(qc.parameters): 
             if 'initial_state' == param.name: 
                 initial_state = param.values
@@ -35,15 +30,6 @@ def get_initial_and_final_NV_state(qc):
                 readout_state = param.values
 
     return initial_state, readout_state
-
-def format_state(state): 
-    state.replace("1", '+')
-    state.replace("0", '-')
-
-    if state not in state_list: 
-        state = '+++'
-
-    return state 
 
 def transpile_ciruit_for_diamond(quantum_circuit_instance):
     """
@@ -220,7 +206,7 @@ class McasTranslator:
                     self.add_cx(operation['controlled_qubit'], operation['controlling_qubit'])
 
                 elif 'operation_name' in operation: 
-                    if operation['operation_name'] == 'barrier': 
+                    if operation['operation_name'] == 'barrier' or operation['operation_name'] == 'measure': 
                         pass
                     else: 
                         raise Exception("The passed operation: {} is not supported!".format(operation['operation_name']))
@@ -262,11 +248,9 @@ class McasTranslator:
         self.mcas_sequence_list.append("cnot_between_nuclear_spins(mcas, '{}', '{}')".format(controlled_nuclear_spin, controlling_nuclear_spin))
 
     def add_nuclear_spin_initialisation(self, state): 
-        state = format_state(state)
         self.mcas_sequence_list.append("full_initialisation(mcas, '{}')".format(state))
 
     def add_nuclear_spin_readout(self, state):
-        state = format_state(state)
         self.mcas_sequence_list.append("readout_nuclear_spin_state(mcas, '{}')".format(state))
     
     def add_electron_pi(self):
