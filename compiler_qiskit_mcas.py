@@ -10,6 +10,8 @@ import time
 from collections.abc import Iterable
 from .file_builder import Mcas_file
 
+default_sweeps = 30
+
 def get_initial_and_final_NV_state(qc):
     """
         Returns the initial as well as final state in case they were specified by the users 
@@ -67,6 +69,7 @@ def construct_full_mcas_file(qc, username, desired_file_path):
     mcas_writer.add_nuclear_spin_initialisation(initial_state)
     mcas_writer.interprete_json_operations(operation_json)
     mcas_writer.add_nuclear_spin_readout(readout_state)
+    mcas_writer.add_num_sweeps(default_sweeps)
 
     time_created = int(time.time())
     file_name = '_'.join(('mcas_file', username, str(time_created)))
@@ -252,6 +255,9 @@ class McasTranslator:
 
     def add_nuclear_spin_readout(self, state):
         self.mcas_sequence_list.append("readout_nuclear_spin_state(mcas, '{}')".format(state))
+    
+    def add_num_sweeps(self, num_sweeps): 
+        self.list_of_iterables.append("('sweeps', range({})),".format(num_sweeps))
     
     def add_electron_pi(self):
         self.mcas_sequence_list.append("electron_pi_pulse(mcas)")
