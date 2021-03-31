@@ -254,7 +254,7 @@ def get_optimised_angle_and_phase(theta, rotation_axis):
             rotation_axis: axis of rotation 'x' or 'y' (to make an rotation around 'z' use another function)
     """
 
-    if (type(theta) == int) or (type(theta) == float):   
+    if (type(theta) == int) or (type(theta) == float) or (type(theta) == np.float64):   
         if (-2*np.pi <= theta < -np.pi): 
             postitive_rotation = True 
             theta += 2*np.pi

@@ -25,6 +25,7 @@ def get_initial_and_final_NV_state(qc):
     if isinstance(qc, QuantumCircuit):
         initial_state = 'None'
         readout_state = 'None'
+        print(qc.parameters)
         for param in list(qc.parameters): 
             if 'initial_state' == param.name: 
                 initial_state = param.values
@@ -60,20 +61,25 @@ def construct_full_mcas_file(qc, username, desired_file_path):
         params: 
             qc: instance of QuantumCircuit
             username: Username of the code submitter, to create a mapping between him and the mcas_file
+
+        return;
+            name of the python file which was constructed 
     """
     initial_state, readout_state = get_initial_and_final_NV_state(qc)
     transpiled_circuit = transpile_ciruit_for_diamond(qc)
     operation_json = construct_operation_list_from_qc_instance(transpiled_circuit)
 
     mcas_writer = McasTranslator()
+    mcas_writer.add_num_sweeps(default_sweeps)
     mcas_writer.add_nuclear_spin_initialisation(initial_state)
     mcas_writer.interprete_json_operations(operation_json)
     mcas_writer.add_nuclear_spin_readout(readout_state)
-    mcas_writer.add_num_sweeps(default_sweeps)
 
     time_created = int(time.time())
     file_name = '_'.join(('mcas_file', username, str(time_created)))
     mcas_writer.write_mcas_file(desired_file_path, file_name)
+
+    return file_name
 
 
 

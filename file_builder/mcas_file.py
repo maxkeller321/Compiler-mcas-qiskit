@@ -3,7 +3,6 @@ import textwrap
 
 
 operations_file_name = "operations"
-operations_folder_name = "operation_definitions"
 indent_level = "\t\t\t"
 alias_for_operations = "op"
 
@@ -53,7 +52,7 @@ mcas_header = ("# coding=utf-8 \n"
 "import os \n" 
 "import UserScripts.helpers.sequence_creation_helpers as sch; reload(sch) \n"
 "import multi_channel_awg_seq as MCAS; reload(MCAS) \n"
-"import "+ operations_folder_name + "." + operations_file_name + " as op; reload(op) \n"
+"import UserScripts.helpers."+ operations_file_name + " as op; reload(op) \n"
 "from collections import OrderedDict \n \n"
 "seq_name = os.path.basename(__file__).split('.')[0] \n"
 "nuclear = sch.create_nuclear(__file__) \n"
