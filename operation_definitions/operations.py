@@ -489,7 +489,7 @@ def full_initialisation(mcas, state):
 
 
 
-def crot_pi_between_nuclear_spins(mcas, controlled_qubit, controlling_qubit): 
+def crot_pi_x_between_nuclear_spins(mcas, controlled_qubit, controlling_qubit): 
     """
         This function appends a controlled pi rotation between two nuclei around the x-axis to the mcas!  
         params: 

@@ -23,8 +23,8 @@ def get_initial_and_final_NV_state(qc):
             readout_state: Final NV-State or None 
     """
     if isinstance(qc, QuantumCircuit):
-        initial_state = 'None'
-        readout_state = 'None'
+        initial_state = '+++'
+        readout_state = '+++'
         print(qc.parameters)
         for param in list(qc.parameters): 
             if 'initial_state' == param.name: 
@@ -254,7 +254,7 @@ class McasTranslator:
     def add_cx(self, controlled_qubit, controlling_qubit): 
         controlled_nuclear_spin = match_integers_with_nuclear_spin(controlled_qubit)
         controlling_nuclear_spin = match_integers_with_nuclear_spin(controlling_qubit)
-        self.mcas_sequence_list.append("cnot_between_nuclear_spins(mcas, '{}', '{}')".format(controlled_nuclear_spin, controlling_nuclear_spin))
+        self.mcas_sequence_list.append("crot_pi_x_between_nuclear_spins(mcas, '{}', '{}')".format(controlled_nuclear_spin, controlling_nuclear_spin))
 
     def add_nuclear_spin_initialisation(self, state): 
         self.mcas_sequence_list.append("full_initialisation(mcas, '{}')".format(state))
