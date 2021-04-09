@@ -5,7 +5,7 @@ import pickle
 import time
 import logging
 
-from Compiler_mcas_qiskit.compiler_qiskit_mcas import construct_full_mcas_file # TODO: change if location is set
+#from Compiler_mcas_qiskit.compiler_qiskit_mcas import construct_full_mcas_file # TODO: change if location is set
 
 logging.basicConfig(filename=os.path.join(os.path.dirname(os.path.realpath(__file__)),'NV_backend_receiver.log'), filemode='w', level=logging.INFO)
 
